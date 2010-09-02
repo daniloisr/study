@@ -13,9 +13,9 @@
 
     <script type="text/javascript">
     /*<![CDATA[  */
-        function vector (){
-            this.x;
-            this.y;
+        function Vector (x, y){
+            this.x = x || 0;
+            this.y = y || 0;
             this.size;
         }
 
@@ -32,50 +32,117 @@
         var menu = [];
         var blocks = 10;
         var block_width = 50;
+        var ctx;
 
         window.onload = function() {
             log($("canvas").offsetTop + ", " + $("canvas").offsetLeft);
             var canvas = $("canvas");
-            var ctx = canvas.getContext("2d");
+            ctx = canvas.getContext("2d");
 
             for(var i=0; i<blocks; i++){
                 blocks_array[i] = [];
                 for(var j=0; j<blocks; j++){
                     var cor = cores[Math.floor(Math.random()*cores.length)];
                     blocks_array[i][j] = cor;
-                    rect(ctx, i*block_width, j*block_width, block_width, block_width, cor);
                 }
             }
 
             for(var i=0; i<cores.length; i++){
-                menu[i] = new vector();
+                menu[i] = new Vector();
                 menu[i].x = 525;
                 menu[i].y = (i*50)+((1+i)*10);
                 menu[i].size = block_width;
 
                 rect(ctx, 525, menu[i].y, block_width, block_width, cores[i]);
             }
+
+            draw();
         };
 
         function draw(){
+            for(var i=0; i<blocks; i++){
+                for(var j=0; j<blocks; j++){
+                    rect(ctx, i*block_width, j*block_width, block_width, block_width, blocks_array[i][j]);
+                }
+            }
         }
 
         function getClickCoord(e){
-            var _x;
-            var _y;
-
-            _x = e.pageX;
-            _y = e.pageY;
+            var c_offset = canvasPosition(); 
             
-            var result = new vector();
-            result.x = _x;
-            result.y = _y;
+            var result = new Vector(e.pageX - c_offset.x, e.pageY - c_offset.y);
+            //var result = new Vector(e.pageX, e.pageY);
             return result;
+        }
+
+        function canvasPosition(){
+            return new Vector($("canvas").offsetLeft, $("canvas").offsetTop);
         }
 
         document.onmousedown = function(e){
             var click_coord = getClickCoord(e);
-            log(click_coord.x + ", " + click_coord.y);
+            var selected;
+
+            for(var i=0; i<menu.length; i++){
+                x = click_coord.x;
+                y = click_coord.y;
+
+                if(x > menu[i].x && x < menu[i].x + menu[i].size &&
+                    y > menu[i].y && y < menu[i].y + menu[i].size){
+
+                    selected = cores[i];
+                    break;
+                }
+            }
+
+            if(selected != null){
+                flodit(selected);
+                log(selected);
+            }
+        }
+
+        function flodit(new_cor){
+            var cor = blocks_array[0][0];
+            var same_color = [new Vector(0, 0)];
+            var flooded = [];
+            var jafoi = [];
+
+            for(var b=0; b<same_color.length; b++) {
+                    // pega vizinhos
+                    x = same_color[b].x;
+                    y = same_color[b].y;
+
+                    if(x>0)
+                        if(blocks_array[x-1][y] == cor)
+                            same_color.push(new Vector(x-1, y));
+                        else
+                            flooded.push(new Vector(x-1, y));
+
+                    if(x<blocks_array.length-1)
+                        if(blocks_array[x+1][y] == cor)
+                            same_color.push(new Vector(x+1, y));
+                        else
+                            flooded.push(new Vector(x+1, y));
+
+                    if(y>0)
+                        if(blocks_array[x][y-1] == cor)
+                            same_color.push(new Vector(x, y-1));
+                        else
+                            flooded.push(new Vector(x, y-1));
+
+                    if(y<blocks_array[x].length-1)
+                        if(blocks_array[x][y+1] == cor)
+                            same_color.push(new Vector(x, y+1));
+                        else
+                            flooded.push(new Vector(x, y+1));
+
+                    blocks_array[x][y] = new_cor;
+            }
+            for(b in flooded){
+                blocks_array[flooded[b].x][flooded[b].y] = new_cor;
+            }
+
+            draw();
         }
 
     /* ]]>*/
