@@ -29,6 +29,7 @@
         }
 
         var blocks_array = [];
+        var blocks_painted = [];
         var menu = [];
         var blocks = 10;
         var block_width = 50;
@@ -41,9 +42,11 @@
 
             for(var i=0; i<blocks; i++){
                 blocks_array[i] = [];
+                blocks_painted[i] = [];
                 for(var j=0; j<blocks; j++){
                     var cor = cores[Math.floor(Math.random()*cores.length)];
                     blocks_array[i][j] = cor;
+                    blocks_painted[i][j] = false;
                 }
             }
 
@@ -102,10 +105,17 @@
         }
 
         function flodit(new_cor){
+            // resta os blocos pintados
+            for(var i=0; i<blocks_painted.length; i++){
+                for(var j=0; j<blocks_painted.length; j++){
+                    blocks_painted[i][j] = false;
+                }
+            }
+            blocks_painted[0][0] = true;
+
             var cor = blocks_array[0][0];
             var same_color = [new Vector(0, 0)];
             var flooded = [];
-            var jafoi = [];
 
             for(var b=0; b<same_color.length; b++) {
                     // pega vizinhos
@@ -113,27 +123,35 @@
                     y = same_color[b].y;
 
                     if(x>0)
-                        if(blocks_array[x-1][y] == cor)
+                        if(blocks_array[x-1][y] == cor && !blocks_painted[x-1][y]){
                             same_color.push(new Vector(x-1, y));
-                        else
+                            blocks_painted[x-1][y] = true;
+                        }
+                        else if(blocks_array[x-1][y] == new_cor)
                             flooded.push(new Vector(x-1, y));
 
                     if(x<blocks_array.length-1)
-                        if(blocks_array[x+1][y] == cor)
+                        if(blocks_array[x+1][y] == cor && !blocks_painted[x+1][y]){
                             same_color.push(new Vector(x+1, y));
-                        else
+                            blocks_painted[x+1][y] = true;
+                        }
+                        else if(blocks_array[x+1][y] == new_cor)
                             flooded.push(new Vector(x+1, y));
 
                     if(y>0)
-                        if(blocks_array[x][y-1] == cor)
+                        if(blocks_array[x][y-1] == cor && !blocks_painted[x][y-1]){
                             same_color.push(new Vector(x, y-1));
-                        else
+                            blocks_painted[x][y-1] = true;
+                        }
+                        else if(blocks_array[x][y-1] == new_cor)
                             flooded.push(new Vector(x, y-1));
 
                     if(y<blocks_array[x].length-1)
-                        if(blocks_array[x][y+1] == cor)
+                        if(blocks_array[x][y+1] == cor && !blocks_painted[x][y+1]){
                             same_color.push(new Vector(x, y+1));
-                        else
+                            blocks_painted[x][y+1] = true;
+                        }
+                        else if(blocks_array[x][y+1] == new_cor)
                             flooded.push(new Vector(x, y+1));
 
                     blocks_array[x][y] = new_cor;
