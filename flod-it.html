@@ -1,0 +1,62 @@
+<!doctype>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style type="text/css">
+        canvas#canvas {
+            border: 1px solid black;}
+        div#log {
+            height: 8em;
+            width: 100%;
+            overflow: auto;}
+    </style>
+
+    <script type="text/javascript">
+    /*<![CDATA[  */
+        function $ (el){ return document.getElementById(el); }
+        function log (msg) { $("log").innerHTML = msg + "<br>" + $("log").innerHTML; }
+
+        var cores = ['#33FF00', '#6600FF', '#FFFF00', '#FF0000', '#66FFFF'];
+        function rect(ctx, x, y, w, h, cor){
+            ctx.fillStyle = cor;
+            ctx.fillRect(x, y, w, h);
+        }
+
+        var blocks_array = [];
+        var blocks = 10;
+        var block_width = 50;
+
+        window.onload = function() {
+            log("Aqui");
+            var canvas = $("canvas");
+            var ctx = canvas.getContext("2d");
+
+            for(var i=0; i<blocks; i++){
+                blocks_array[i] = [];
+                for(var j=0; j<blocks; j++){
+                    var cor = cores[Math.floor(Math.random()*cores.length)];
+                    blocks_array[i][j] = cor;
+                    rect(ctx, i*block_width, j*block_width, block_width, block_width, cor);
+                }
+            }
+
+            for(var i=0; i<cores.length; i++){
+                rect(ctx, 525, (i*50)+(i*10), block_width, block_width, cores[i]);
+            }
+        };
+
+        function draw(){
+        }
+
+    /* ]]>*/
+    </script>
+</head>
+
+<body>
+    <center>
+    <canvas id="canvas" width="600" height="500"></canvas>
+    </center>
+
+    <div id="log"></div>
+</body>
+</html>
