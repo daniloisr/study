@@ -13,6 +13,12 @@
 
     <script type="text/javascript">
     /*<![CDATA[  */
+        function vector (){
+            this.x;
+            this.y;
+            this.size;
+        }
+
         function $ (el){ return document.getElementById(el); }
         function log (msg) { $("log").innerHTML = msg + "<br>" + $("log").innerHTML; }
 
@@ -23,11 +29,12 @@
         }
 
         var blocks_array = [];
+        var menu = [];
         var blocks = 10;
         var block_width = 50;
 
         window.onload = function() {
-            log("Aqui");
+            log($("canvas").offsetTop + ", " + $("canvas").offsetLeft);
             var canvas = $("canvas");
             var ctx = canvas.getContext("2d");
 
@@ -41,11 +48,34 @@
             }
 
             for(var i=0; i<cores.length; i++){
-                rect(ctx, 525, (i*50)+(i*10), block_width, block_width, cores[i]);
+                menu[i] = new vector();
+                menu[i].x = 525;
+                menu[i].y = (i*50)+((1+i)*10);
+                menu[i].size = block_width;
+
+                rect(ctx, 525, menu[i].y, block_width, block_width, cores[i]);
             }
         };
 
         function draw(){
+        }
+
+        function getClickCoord(e){
+            var _x;
+            var _y;
+
+            _x = e.pageX;
+            _y = e.pageY;
+            
+            var result = new vector();
+            result.x = _x;
+            result.y = _y;
+            return result;
+        }
+
+        document.onmousedown = function(e){
+            var click_coord = getClickCoord(e);
+            log(click_coord.x + ", " + click_coord.y);
         }
 
     /* ]]>*/
