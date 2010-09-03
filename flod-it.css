@@ -1,0 +1,6 @@
+canvas#canvas {
+    border: 1px solid black;}
+div#log {
+    height: 8em;
+    width: 100%;
+    overflow: auto;}
