@@ -35,8 +35,33 @@ Mine = function () {
     this.blocks = this.makeBlocks();
     
     this.draw_map(this.ctx);
+
+    this.key_listener();
     
 };
+
+Mine.prototype.key_listener = function () {
+    var mine_ref = this;
+    $('canvas').onmousemove = function (e) {
+        mine_ref.mapCanvas.call(mine_ref, e);
+    }
+    $('canvas').onclick =  function (e) {
+        mine_ref.mapClick.call(mine_ref, e);
+    };
+    $('canvas').oncontextmenu = function (e) {
+        mine_ref.mapFlag.call(mine_ref, e);
+        e.cancelBubble = true;
+        e.stopPropagation();
+        e.preventDefault();
+    };
+}
+
+Mine.prototype.remove_key_listener = function () {
+    var mine_ref = this;
+    $('canvas').onmousemove     = null;
+    $('canvas').onclick         = null;
+    $('canvas').oncontextmenu   = null;
+}
 
 Mine.prototype.draw_map = function (ctx) {
     for(i=0; i<this.rows; i++){
@@ -84,6 +109,9 @@ Block = function (game, x, y) {
             image = this.ref.imageFactory.get('number')[this.number];
 
         this.ref.imageFactory.drawBlock(image, this);
+        
+        if(this.mined)
+            this.ref.gameover(this);
     }
     
     this.flag = function () {
@@ -151,7 +179,6 @@ Block.prototype.revealNeightboors = function () {
     to_reveal.push(this);
 
     while(to_reveal.length > 0){
-        console.log('aidjaijd');
         current = to_reveal.shift();
 
         // conta quantas bandeiras foram colocadas
@@ -165,15 +192,20 @@ Block.prototype.revealNeightboors = function () {
         }
         
         if(bombs >= current.number && wrong_mark){
-            this.ref.gameover();        // game over
+            this.ref.gameover(this);        // game over
             return;
         }
         
         if(bombs == current.number){
             for(var n in current.neightboors){
                 // Empilha os proximos a serem revelados
-                if(current.neightboors[n].number == 0 && !current.neightboors[n].revealed)
+                if(current.neightboors[n].number == 0 &&
+                    !current.neightboors[n].revealed &&
+                    !current.neightboors[n].visited) {
+
+                    current.neightboors[n].visited = true;
                     to_reveal.push(current.neightboors[n]);
+                }
 
                 if(!current.neightboors[n].mined)
                     current.neightboors[n].reveal();
@@ -181,6 +213,18 @@ Block.prototype.revealNeightboors = function () {
         }
     }
 
+}
+
+// game over pode ser por clicar na bomba
+// ou ter marcado uma flag errada
+Mine.prototype.gameover = function (block) {
+    // click mine
+    if(block.mined){
+        this.remove_key_listener();
+    }
+    else {
+        this.remove_key_listener();
+    }
 }
 
 Mine.prototype.mapCanvas = function(e) {
@@ -277,18 +321,6 @@ Mine.prototype.getBlockByCoor = function (coor) {
         return null;
 }
 
-// TODO
-Mine.prototype.gameover = function () {
-    this.clear();
-    var div = document.createElement('div');
-    div.width = 400;
-    div.height = 400;
-    div.innerHTML = "GAME OVER";
-    div.style.fontWeight = '100px';
-    div.style.lineHeight = '400px';
-    $('canvas').appendChild(div);
-}
-
 }());
 
 function fieldsVerify() {
@@ -305,18 +337,6 @@ function fieldsVerify() {
 
 window.onload = function () {
     mine = new Mine();
-    $('canvas').addEventListener('mousemove', function (e) {
-        mine.mapCanvas.call(mine, e);
-    }, false);
-    $('canvas').addEventListener('click', function (e) {
-        mine.mapClick.call(mine, e);
-    }, false);
-    $('canvas').addEventListener('contextmenu', function (e) {
-        mine.mapFlag.call(mine, e);
-        e.cancelBubble = true;
-        e.stopPropagation();
-        e.preventDefault();
-    }, false);
     $('go').onclick = function (e) {
         mine.clear();
         fieldsVerify();
