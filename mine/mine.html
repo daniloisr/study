@@ -6,13 +6,22 @@
     <script type="text/javascript" src="images.js"></script>
     <script type="text/javascript" src="mine.js"></script>
     <style type="text/css">
-        body {
-            text-align: center;
+        #game {
+            width: 400px;
+            margin: 0 auto;
         }
         
         #canvas {
             border: 1px solid black;
         }
+        #status {
+            width: 400px;
+            height: 60px;
+            position: relative;
+            border: 1px solid black;}
+            #status #face {
+                posistion: absolute;
+            }
 
         #images { display: none; }
     </style>
@@ -20,6 +29,11 @@
 
 <body>
     <div id="game">
+    <div id="status">
+        <div id="counter"></div>
+        <div id="face"></div>
+        <div id="moves"></div>
+    </div>
     <canvas id="canvas" width="400" height="400">
     </canvas>
     <div id="controls">

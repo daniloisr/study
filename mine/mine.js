@@ -45,7 +45,7 @@ Mine.prototype.key_listener = function () {
     $('canvas').onmousemove = function (e) {
         mine_ref.mapCanvas.call(mine_ref, e);
     }
-    $('canvas').onclick =  function (e) {
+    $('canvas').onmousedown =  function (e) {
         mine_ref.mapClick.call(mine_ref, e);
     };
     $('canvas').oncontextmenu = function (e) {
@@ -115,7 +115,8 @@ Block = function (game, x, y) {
     }
     
     this.flag = function () {
-        this.flagged = true;
+        if(this.revealed) return;
+        this.flagged = this.revealed = true;
         image = this.ref.imageFactory.get('flag');
         this.ref.imageFactory.drawBlock(image, this);
     }
@@ -220,6 +221,7 @@ Block.prototype.revealNeightboors = function () {
 Mine.prototype.gameover = function (block) {
     // click mine
     if(block.mined){
+        
         this.remove_key_listener();
     }
     else {
@@ -327,10 +329,10 @@ function fieldsVerify() {
     fields = ['rows', 'cols', 'mines'];
     for(i in fields){
         if($(fields[i]).value <= 0){
-            $(fields[i]).value = 1;
+            $(fields[i]).value = 20;
         }
         if(fields[i] != 'mines' && $(fields[i]).value > 13){
-            $(fields[i]).value = 13;
+            $(fields[i]).value = 10;
         }
     }
 }
