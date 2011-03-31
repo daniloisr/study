@@ -1,0 +1,126 @@
+<!doctype>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<style type="text/css">#canvas { border: 1px solid black; }</style>
+	<script type="text/javascript">
+
+var mSpirograph = {}, env = {}, p = {}, p_old = {}, cor = {};
+var loop, intervalId
+
+function $(id){ return document.getElementById(id); }
+
+var ctx, r, R, d, flag
+
+mSpirograph.bigCir = function (){
+    /*
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(0, 0, R, 0, Math.PI*2,true)
+    ctx.stroke()
+    ctx.restore()
+    */
+}
+
+mSpirograph.litCir = function (angle){
+    p_old.x = p.x
+    p_old.y = p.y
+
+    ctx.save()
+
+    cor.r = parseInt(Math.abs((p.x * 1.2)%255))
+    cor.g = parseInt(Math.abs((p.y * 1.2)%255))
+    cor.b = parseInt(Math.abs(((p.x + p.y)* 1.2)%255))
+    ctx.strokeStyle = "rgba(" + cor.r + "," + cor.g + "," + cor.b +", 1)"
+
+    p.x = (R-r)*Math.cos(angle) + d*Math.cos(-((R-r)/r)*angle);
+    p.y = (R-r)*Math.sin(angle) + d*Math.sin(-((R-r)/r)*angle);
+
+    ctx.beginPath()
+    ctx.moveTo(p_old.x, p_old.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke()
+
+    ctx.restore()
+}
+
+env.init = function (){
+    ctx = $("canvas").getContext("2d")
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2)
+
+    $('draw').onclick  = env.draw
+    $('stop').onclick  = env.stop
+    $('clear').onclick = env.clear
+
+    env.refresh()
+    env.clear()
+}
+
+env.clear = function() {
+    ctx.save()
+        ctx.translate(-ctx.canvas.width/2, -ctx.canvas.height/2)
+        ctx.fillStyle = "black"
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.restore()
+}
+
+env.refresh = function (){
+    R = parseInt($('R').value) || 90
+    r = parseInt($('r').value) || 50
+    d = parseInt($('d').value) || 10
+    p.x = R-r+d
+    p.y = 0
+
+    loop = 1
+    flag = 0
+}
+
+env.draw = function(){
+    if(intervalId){
+        clearInterval(intervalId)
+    }
+    env.refresh()
+    intervalId = setInterval(loop_func, 5)
+}
+
+env.stop = function(){
+    clearInterval(intervalId)
+}
+
+loop_func = function (){
+    if(loop < 36000){
+        ctx.save()
+        ctx.translate(-ctx.canvas.width/2, -ctx.canvas.height/2)
+        //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+        ctx.restore()
+
+        mSpirograph.bigCir()
+        mSpirograph.litCir(Math.PI/60*loop)
+        loop++
+    }
+    else {
+        env.stop
+    }
+}
+
+window.onload = env.init
+
+	</script>
+</head>
+
+<body>
+	<center>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <br/>
+
+        R: <input id="R" type="text" size="5" value="90" />
+        r: <input id="r" type="text" size="5" value="50" />
+        d: <input id="d" type="text" size="5" value="10" />
+        <button id="draw">Desenhar</button>
+        <button id="stop">Parar</button>
+        <button id="clear">Limpar</button>
+	</center>
+</body>
+</html>
+
