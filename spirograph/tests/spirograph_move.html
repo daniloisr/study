@@ -40,6 +40,7 @@ var wtf = new Object();
     var mover;
 
     wtf.drawBigCir = function (){
+        circlesLayers.clearRect(0,0,width,height);
         circlesLayers.save()
         circlesLayers.translate(centerPoint.x, centerPoint.y)
         circlesLayers.strokeStyle = "white"
@@ -69,30 +70,8 @@ var wtf = new Object();
         mover.style.left = centerPoint.x - R - 32;
         mover.style.top = centerPoint.y - R;
 
-        mover.addEventListener('mousedown', function(e){
-            mouseDown = true;
-        },false)
+        mover.onmousedown = dragCenter.startDrag;
 
-        mover.addEventListener('mouseup', function(e){
-            mouseDown = false;
-        },false)
-
-        window.addEventListener('mousemove', function(e){
-            mouseCoor.x = e.clientX;
-            mouseCoor.y = e.clientY;
-
-            if(mouseDown){
-                centerPoint.x = mouseCoor.x + R + 32;
-                centerPoint.y = mouseCoor.y + R;
-
-                circlesLayers.clearRect(0,0,width,height);
-                wtf.drawBigCir()
-
-                mover.style.left = centerPoint.x - R - 32;
-                mover.style.top = centerPoint.y - R;
-            }
-
-        }, false);
     }
 
     function canvasFactory(){
@@ -107,6 +86,54 @@ var wtf = new Object();
         return canvas.getContext("2d");
     }
 
+    var dragCenter = {
+
+        iniMousePos:    {},
+        startPos:       {},
+        dragging:       null,
+
+        startDrag: function (e) {
+            dragCenter.startPos.x = this.offsetLeft;
+            dragCenter.startPos.y = this.offsetTop;
+            dragCenter.dragging = this;
+            this.className += ' dragged';
+
+            dragCenter.iniMousePos.x = e.clientX;
+            dragCenter.iniMousePos.y = e.clientY;
+
+            document.addEventListener('mousemove',  dragCenter.drag     , false);
+
+            document.addEventListener('mouseup',    dragCenter.release  , false);
+
+            return false;
+        },
+
+        drag: function (e) {
+            var x = e.clientX - dragCenter.iniMousePos.x;
+            var y = e.clientY - dragCenter.iniMousePos.y;
+
+            dragCenter.setPos(x, y);
+            wtf.drawBigCir();
+            
+            return false;
+        },
+
+        release: function () {
+            document.removeEventListener('mousemove', dragCenter.drag, false);
+            document.removeEventListener('mouseup', dragCenter.release, false);
+            dragCenter.dragging.className = dragCenter.dragging.className.replace(/ dragged/, '');
+            dragCenter.dragging = null;
+        },
+
+        setPos: function (x, y){
+            dragCenter.dragging.style.left = dragCenter.startPos.x + x + 'px';
+            dragCenter.dragging.style.top = dragCenter.startPos.y + y + 'px';
+
+            centerPoint.x = dragCenter.startPos.x + x + R + 20;
+            centerPoint.y = dragCenter.startPos.y + y + R;
+        }
+    };
+
 }())
 
 	</script>
@@ -118,10 +145,10 @@ var wtf = new Object();
         <input id="r" type="range" min="10" max="90" value="52" onchange="wtf.alterValues()"/>
         <input id="d" type="range" min="0" max="100" value="75" onchange="wtf.alterValues()"/>
 
-        <img id="play_stop_button" onclick="wtf.toggleAnimation()" src="spirograph_images/play.png" />
-        <img id="show_hide_button" onclick="wtf.toggleCircs()" src="spirograph_images/hide_circ.png" />
+        <img id="play_stop_button" onclick="wtf.toggleAnimation()" src="../spirograph_images/play.png" />
+        <img id="show_hide_button" onclick="wtf.toggleCircs()" src="../spirograph_images/hide_circ.png" />
 
     </div>
-    <div id="mover" style="background: url(spirograph_images/move.png);position: absolute; width: 32px; height: 32px; z-index: 9999; display: inline;"/>
+    <div id="mover" style="background: url(../spirograph_images/move.png);position: absolute; width: 32px; height: 32px; z-index: 9999; display: inline;"/>
 </body>
 </html>
