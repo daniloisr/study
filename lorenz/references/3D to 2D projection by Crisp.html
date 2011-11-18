@@ -1,0 +1,121 @@
+
+<!-- saved from url=(0062)http://membres.multimania.fr/amycoders/tutorials/3dbasics.html -->
+<html style="padding-bottom: 90px; "><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><script type="text/javascript">
+window.google_analytics_uacct = "UA-7539432-8";
+</script>
+<style>
+#catfish238c477c{PADDING: 0px;MARGIN: 0px 0px -90px;WIDTH: 100%;HEIGHT: 90px;BOTTOM: 0px;POSITION: fixed;}
+</style>
+<!--[if IE]>
+<style>
+#catfish238c477c{ Z-INDEX: 1000; OVERFLOW: hidden; POSITION: absolute;}
+HTML,BODY {OVERFLOW: hidden;WIDTH: auto;HEIGHT: 100%;}
+DIV#zip238c477c{PADDING: 0px;MARGIN: 0px;OVERFLOW: auto;WIDTH: 100%;HEIGHT: 100%;POSITION: relative;}
+</style>
+<![endif]-->
+</head><body bgcolor="#FFFFFF" background="./3D to 2D projection by Crisp_files/back.gif" text="#000000" link="#E00033" vlink="#000000" alink="#FF0000"><div id="topad238c477c"><iframe height="90" width="100%" src="./3D to 2D projection by Crisp_files/adframe(2).html" scrolling="no" frameborder="0"></iframe></div>
+
+
+<title>3D to 2D projection by Crisp</title>
+
+
+
+<p align="center"><table width="95%" cellpadding="10">
+
+  <tbody><tr>
+    <td width="60%"><p align="center"><font size="3" color="#FF8080" face="Arial"><i><a href="http://membres.multimania.fr/amycoders/tutorials/index.php3">back</a></i></font><br>
+    <font size="8" color="#FF0044" face="Arial"><b><i>3D to 2D projection</i></b><br>
+    </font></p></td>
+  </tr>
+  <tr>
+    <td bgcolor="#E0E0E0"><div align="center"><center><table cellpadding="5" cellspacing="0" width="100%" border="0" bgcolor="#b0a8b0">
+      <tbody><tr>
+        <td><font size="4" color="#fff080" face="Arial,Helvetica"><i>Tutorial about projecting
+        3D points to a 2D screen</i></font></td>
+      </tr>
+    </tbody></table>
+    </center></div><p><br>
+    <em>by Crisp/Planet Jazz (april 1999)</em><br>
+    <em>corrections by Scout (*) (may 1999)</em></p>
+    <p>
+    <b><u>Introduction</u></b><br>    <br>    This tutorial is aimed at explaining you how you can project a 3 dimensional point to    a 2 dimensional plane (which in most cases will be the screen). This is the absolute    basics you have to know before trying to code 3D effects. Most of you will probably    already know the most oftenly used formulas by heart, but it is also important to    know how those formula's can be derived.</p>    <p>    <b><u>The idea behind it all</u></b><br>    <br>
+    We will be working in a 3D space, with a right-handed base. This means that if you    take your right hand and point your thumb in the direction of the X-axis, your ring-    finger in the direction of the Y-axis, that the Z-axis will point straight up your    hand-palm, as shown in the figure below:    </p>    <center><img src="./3D to 2D projection by Crisp_files/base.gif" width="112" height="137"></center>    <p>    The user's point of view will be represented by a point in this 3D space. From this    point, the user has a certain "view" on our 3D world. This view is drawn below as
+    the pyramid. All ray of lights that pass this "pyramid" will originate from objects
+    that the user sees. When they pass this pyramid, they also pass the front plane. In
+    the end, the whole 3D to 2D projection will be about projection the entire 3D world
+    on that plane in front of the pyramid (coloured grey in the figures). Imagine we want
+    to project a cube on a plane. If we want to draw the situation, it would look somewhat
+    like this (note that the base we use has been rotated a bit):
+    </p>
+    <center><img src="./3D to 2D projection by Crisp_files/cubeplane.gif" width="243" height="176"></center>
+    <p>
+    The projection plane will in the end be the screen that the user sees. If we want to
+    project a point of our cube on this plane <b>according to the user's view</b>, we'll
+    need to intersect the line (= ray of light) between the point to project and the user's
+    point of view with our projection plane. Let's call the point we want to project <b>a</b>,
+    and the user's point of view <b>b</b>. The line <b>[ab]</b> will intersect our projection
+    plane, and the intersection point will be called <b>a'</b>:
+    </p>
+    <center><img src="./3D to 2D projection by Crisp_files/pointproj.gif" width="289" height="172"></center>
+    <p>
+    This <b>a'</b> will have the coordinates we are looking for. So let's bring in the
+    math to find the coordinates of this <b>a'</b>.
+    </p>
+    <p>
+    <b><u>The mathematical approach</u></b><br>
+    <br>
+    Since we are working in a 3 dimensional space, all points are represented by three
+    co-ordinates (the x-coordinate, the y-coordinate and the z-coordinate). Our point    <b>a</b> from the cube will have three coordinates, let's call them <b>(x,y,z)</b>.    To make the calculations a bit easier, we'll put the user in the point zero (exactly    where the user belongs :). The point <b>a'</b> that we are looking for will have    the coordinates <b>(u,v,w)</b>.    </p>    <center><img src="./3D to 2D projection by Crisp_files/point3d.gif" width="216" height="162"></center>    <p>    First of all, we'll need to define the plane we want to project everything on. The    cartesian equation of a plane is <b>z=value</b>, where value is the offset of the
+    plane (note that this <b>z</b> has nothing to do with the z-coordinate of our point <b>a</b>!).
+    Since computers can work very easily with powers of 2, we'll use the plane    <b>z=256</b> as the projection plane (this means that the third coordinate of all    points in the projection plane are 256). There's also another reason why we choose    256, try changing the value to a bigger or lower value to see the result!. If the    third coordinate of all points in the plane equals 256, then the coordinates of    our point <b>a'</b> will look like <b>(u,v,256)</b> (the point <b>a'</b> has to lie    in our projection plane, and all third coordinates of points in that plane are 256).    This means that we only have to look for two more coordinates (<b>u</b> and <b>v</b>).    </p>    <center><img src="./3D to 2D projection by Crisp_files/point3d2.gif" width="219" height="162"></center>    <p>    We can get those two coordinates by calculating the intersection point of the line    <b>[ab]</b> with the plane <b>z=256</b>. First we need to define the line between two points:    mathematically, the line <b>[ab]</b> is the collection of all points between the point    <b>a</b> and the point <b>b</b>:</p>    <p>
+    </p><center><b>[ab]</b> = {all points between <b>a</b> and <b>b</b>}</center><p></p>    <p>    Without going into too much detail about the linear algebra, I'll tell you that    the equation for a line is given as:</p>    <p>    </p><center><b>[ab]</b> = <b>b</b> + <b>c</b> * (<b>a</b> - <b>b</b>)</center><p></p>    <p>where <b>c</b> can be any real value. We just described that all points have three    coordinates, and <b>a</b> = <b>(x,y,z)</b>, <b>b</b> = <b>(0,0,0)</b>, so we could    also say that the equation is:    </p>    <p>    </p><center><b>[ab]</b> = <b>(0,0,0)</b> + <b>c</b> * <b>(x - 0, y - 0, z - 0)</b><br>            <br>            <b>[ab]</b> = <b>(0,0,0)</b> + <b>c</b> * <b>(x, y, z)</b><br>            <br>            <b>[ab]</b> = <b>(0 + c*x , 0 + c*y , 0 + c*z)</b></center><p></p>    <p>    This means that a point <b>(e,f,g)</b> is on the line <b>[ab]</b> when a certain value <b>c</b>    exists so that:<br>    <br>    </p><center><b>(e,f,g)</b> = <b>( c*x , c*y , c*z )</b></center>    <br>    Our point <b>a' = (u,v,256)</b> also lies on the line <b>[ab]</b>, so we can say that there is    a certain value for <b>c</b> so that:<br>    <br>    <center><b>(u,v,256)</b> = <b>( c*x, c*y, c*z )</b></center>    <br>
+    This means that:<br>
+    <br>    <center> <b>u</b>   = <b>c</b> * <b>x</b><br>             <b>v</b>   = <b>c</b> * <b>y</b><br>             <b>256</b> = <b>c</b> * <b>z</b></center>    <br>
+    This last equation allows us to find the value for <b>c</b>:<br>
+    <br>
+    <center><b>c</b> = 256 / <b>z</b></center>
+    <br>
+    So the coordinates of the point <b>a' = (u,v,256)</b> become:<br>
+    <br>
+    <center><b>(u,v,256)</b> = ( <b>x</b> * 256 / <b>z</b> , <b>y</b> * 256 / <b>z</b> , <b>256</b> )</center>
+    <br>
+    Or, if we look at the coordinates in the plane <b>z=256</b>:<br>
+    <br>
+    <table width="95%">
+    <tbody><tr><td bgcolor="#E0E0E0"><div align="center"><center><table cellpadding="5" cellspacing="0" width="100%" border="0" bgcolor="#b0a8b0">
+      <tbody><tr><td align="center"><b>u</b> = <b>x</b> * 256 / <b>z</b></td></tr>
+      <tr><td align="center"><b>v</b> = <b>y</b> * 256 / <b>z</b></td></tr>
+    </tbody></table></center><p></p>
+    <br>
+    These are the basic projection formulas to convert (almost) every point in a 3 dimensional
+    space to a 2 dimensional plane. As you can see, the feeling of "depth" is accomplished by
+    dividing by the <b>z</b>-value for every point. (*)<br>
+    <br>
+    <b><u>Note:</u></b> This formula is only valid for points that have a z-coordinate
+         greater than zero. (Points with a z-coordinate of zero are not possible
+         to project, and points with a negative z-coordinate project to
+         completely meaningless coordinates; rendering such points could
+         potentially corrupt innocent memory and is generally not a good idea.)
+         Hence, do not forget to leave out points that have a zero or negative
+         or z-coordinate! (*)
+
+<p></p>
+</div>
+</td></tr></tbody></table>
+
+<p align="center">&nbsp;</p>
+</td></tr></tbody></table>
+
+</p>
+
+<script type="text/javascript">
+   var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+   document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script src="./3D to 2D projection by Crisp_files/ga.js" type="text/javascript"></script>
+<script type="text/javascript">
+   try {
+      var pageTracker = _gat._getTracker("UA-7539432-8");
+      pageTracker._trackPageview();
+   } catch(err) {}
+</script>
+</body></html>
