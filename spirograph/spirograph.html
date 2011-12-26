@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<style type="text/css">
 	body {
-	    background: black;
+	    background: #333333;
 	}
 	canvas {
 	    position: absolute;
@@ -15,13 +15,16 @@
 	}
 	#menu {
 	    position: absolute;
-	    z-index: 99;
+	    z-index: 98;
+	}
+	div.dg {
+	    z-index: 99 !important;
 	}
 	</style>
+    <script type="text/javascript" src="lib/dat.gui.min.js"></script>
 	<script type="text/javascript">
 
-var wtf = new Object();
-
+var spiroDrawer;
 (function mySpirograph(){
     var width  = window.innerWidth;
     var height = window.innerHeight;
@@ -29,144 +32,154 @@ var wtf = new Object();
     var spiroLayer, circlesLayers;
     var curAngle = 0;
     var zIndex = 0;
-    var loop;
+    var speed;
     var intervalId;
-    var R,r,d;
     var mouseDown;
     var p = {}, p_old = {};
     var playStopButton, showHideButton;
     var hideCirc;
     var mover;
 
-    wtf.drawBigCir = function (){
-        circlesLayers.save()
-        circlesLayers.translate(centerPoint.x, centerPoint.y)
-        circlesLayers.strokeStyle = "white"
-        circlesLayers.beginPath()
-        circlesLayers.arc(0, 0, R, 0, Math.PI*2,true)
-        circlesLayers.stroke()
-        circlesLayers.restore()
-    }
-
-    wtf.drawLittleCir = function (angle){
-        curAngle = angle;
-
-        circlesLayers.save()
-        circlesLayers.translate(centerPoint.x, centerPoint.y)
-        circlesLayers.strokeStyle = "white"
-        circlesLayers.rotate(angle)
-        circlesLayers.beginPath()
-        circlesLayers.translate(R-r, 0)
-        circlesLayers.arc(0, 0, r, 0, Math.PI*2,true)
-        circlesLayers.stroke()
-        circlesLayers.restore()
-
-        circlesLayers.save()
-        circlesLayers.strokeStyle = "red"
-        circlesLayers.translate(centerPoint.x, centerPoint.y)
-
-        circlesLayers.beginPath();
-        circlesLayers.arc(p.x, p.y, 3, 0, Math.PI*2, true)
-        circlesLayers.stroke()
-
-        circlesLayers.restore()
-    }
-
-    wtf.drawSpiro = function(angle){
-        spiroLayer.save()
-        spiroLayer.translate(centerPoint.x, centerPoint.y)
-
-        spiroLayer.strokeStyle = "#aaa";
-
-        spiroLayer.beginPath()
-        spiroLayer.moveTo(p_old.x, p_old.y);
-        spiroLayer.lineTo(p.x, p.y);
-        spiroLayer.stroke()
-
-        spiroLayer.restore()
-    }
-
-    wtf.clearCircles = function () {
-        circlesLayers.clearRect(0,0,width,height);
-    }
-
-    wtf.drawCirsOnly = function (){
-        wtf.drawBigCir();
-        wtf.drawLittleCir(curAngle);
-    }
-
-    wtf.redrawCirs = function (angle){
-        p_old.x = p.x
-        p_old.y = p.y
-
-        p.x = (R-r)*Math.cos(angle) + d*Math.cos(-((R-r)/r)*angle);
-        p.y = (R-r)*Math.sin(angle) + d*Math.sin(-((R-r)/r)*angle);
-
-        wtf.clearCircles();
-        if(!hideCirc){
-            wtf.drawBigCir();
-            wtf.drawLittleCir(angle);
-        }
-        wtf.drawSpiro(angle);
-    }
-
-    wtf.animateCirs = function (){
-        if(!mouseDown){
-            wtf.redrawCirs(Math.PI/60*loop);
-            loop++;
-        }
-    }
-
-    wtf.stopAnimation = function (){
-        clearInterval(intervalId);
-        intervalId = false
-    }
-    
-    wtf.playAnimation = function (){
-        intervalId = setInterval("wtf.animateCirs()", 10);
-    }
-
-    wtf.toggleAnimation = function (){
-        if(intervalId){
-            playStopButton.src = 'spirograph_images/play.png'
-            wtf.stopAnimation();
-
-            wtf.drawBigCir();
-            wtf.drawLittleCir(curAngle);
-        }
-        else {
-            playStopButton.src = 'spirograph_images/stop.png'
-            wtf.playAnimation()
-        }
-    }
-
-    wtf.toggleCircs = function (){
-        if(hideCirc){
-            showHideButton.src = 'spirograph_images/hide_circ.png'
-            hideCirc = false;
-            wtf.drawCirsOnly();
-        }
-        else {
-            showHideButton.src = 'spirograph_images/show_circ.png'
-            hideCirc = true;
-            wtf.clearCircles();
-        }
-    }
-
-    wtf.alterValues = function (){
-        R = parseInt(document.getElementById("R").value)
-        r = parseInt(R * parseInt(document.getElementById("r").value)/100)
-        d = parseInt(r * parseInt(document.getElementById("d").value)/100)
-
-        p.x = (R-r)*Math.cos(curAngle) + d*Math.cos(-((R-r)/r)*curAngle);
-        p.y = (R-r)*Math.sin(curAngle) + d*Math.sin(-((R-r)/r)*curAngle);
+    function SpiroDrawer(){
+        this.R = 100;
+        this.r = 52;
+        this.d = 75;
+        this.s = 1;
+        this.color = "#aaaaaa";
         
-        wtf.clearCircles();
-        wtf.drawCirsOnly();
-    }
+        this.drawBigCir = function (){
+            circlesLayers.save()
+            circlesLayers.translate(centerPoint.x, centerPoint.y)
+            circlesLayers.strokeStyle = "white"
+            circlesLayers.beginPath()
+            circlesLayers.arc(0, 0, this.R, 0, Math.PI*2,true)
+            circlesLayers.stroke()
+            circlesLayers.restore()
+        };
 
-    wtf.moveCircs = function (){
+        this.drawLittleCir = function (angle){
+            curAngle = angle;
+
+            circlesLayers.save()
+            circlesLayers.translate(centerPoint.x, centerPoint.y)
+            circlesLayers.strokeStyle = "white"
+            circlesLayers.rotate(angle)
+            circlesLayers.beginPath()
+            circlesLayers.translate(this.R-this.r, 0)
+            circlesLayers.arc(0, 0, this.r, 0, Math.PI*2,true)
+            circlesLayers.stroke()
+            circlesLayers.restore()
+
+            circlesLayers.save()
+            circlesLayers.strokeStyle = "red"
+            circlesLayers.translate(centerPoint.x, centerPoint.y)
+
+            circlesLayers.beginPath();
+            circlesLayers.arc(p.x, p.y, 3, 0, Math.PI*2, true)
+            circlesLayers.stroke()
+
+            circlesLayers.restore()
+        };
+
+        this.drawSpiro = function(angle){
+            spiroLayer.save()
+            spiroLayer.translate(centerPoint.x, centerPoint.y)
+
+            spiroLayer.strokeStyle = this.color;
+
+            spiroLayer.beginPath()
+            spiroLayer.moveTo(p_old.x, p_old.y);
+            spiroLayer.lineTo(p.x, p.y);
+            spiroLayer.stroke()
+
+            spiroLayer.restore()
+        };
+
+        this.clearCircles = function () {
+            circlesLayers.clearRect(0,0,width,height);
+        };
+
+        this.drawCirsOnly = function (){
+            this.drawBigCir();
+            this.drawLittleCir(curAngle);
+        };
+
+        this.redrawCirs = function (angle){
+            p_old.x = p.x
+            p_old.y = p.y
+
+            p.x = (this.R-this.r)*Math.cos(angle) + this.d*Math.cos(-((this.R-this.r)/this.r)*angle);
+            p.y = (this.R-this.r)*Math.sin(angle) + this.d*Math.sin(-((this.R-this.r)/this.r)*angle);
+
+            this.clearCircles();
+            if(!hideCirc){
+                this.drawBigCir();
+                this.drawLittleCir(angle);
+            }
+            this.drawSpiro(angle);
+        };
+
+        this.animateCirs = function (){
+            if(!mouseDown){
+                for(var i=0; i<this.s; i++){
+                    this.redrawCirs(Math.PI/60*speed);
+                    speed++;
+                }
+            }
+        };
+
+        this.stopAnimation = function (){
+            clearInterval(intervalId);
+            intervalId = false
+        };
         
+        this.playAnimation = function (){
+            intervalId = setInterval("spiroDrawer.animateCirs()", 20);
+        };
+
+        this.toggleAnimation = function (){
+            if(intervalId){
+                playStopButton.src = 'spirograph_images/play.png'
+                this.stopAnimation();
+
+                this.drawBigCir();
+                this.drawLittleCir(curAngle);
+            }
+            else {
+                playStopButton.src = 'spirograph_images/stop.png'
+                this.playAnimation()
+            }
+        };
+
+        this.toggleCircs = function (){
+            if(hideCirc){
+                showHideButton.src = 'spirograph_images/hide_circ.png'
+                hideCirc = false;
+                this.drawCirsOnly();
+            }
+            else {
+                showHideButton.src = 'spirograph_images/show_circ.png'
+                hideCirc = true;
+                this.clearCircles();
+            }
+        };
+
+        this.alterValues = function (){
+            /*this.R = parseInt(document.getElementById("R").value)
+            this.r = parseInt(this.R * parseInt(document.getElementById("r").value)/100)
+            this.d = parseInt(this.r * parseInt(document.getElementById("d").value)/100)
+            this.s = parseInt(document.getElementById("s").value)*/
+
+            p.x = (this.R-this.r)*Math.cos(curAngle) + this.d*Math.cos(-((this.R-this.r)/this.r)*curAngle);
+            p.y = (this.R-this.r)*Math.sin(curAngle) + this.d*Math.sin(-((this.R-this.r)/this.r)*curAngle);
+            
+            this.clearCircles();
+            this.drawCirsOnly();
+        };
+
+        this.moveCircs = function (){
+            
+        };
     }
 
     window.onload = function(){
@@ -176,21 +189,31 @@ var wtf = new Object();
         playStopButton = document.getElementById('play_stop_button');
         showHideButton = document.getElementById('show_hide_button');
 
-        wtf.alterValues()
+        spiroDrawer = new SpiroDrawer();
+        spiroDrawer.alterValues();
+        
+        function u() {
+            spiroDrawer.alterValues();
+        }
+        
+        var gui = new dat.GUI();
+        gui.add(spiroDrawer, 'R', 10, 300).onChange(u);
+        gui.add(spiroDrawer, 'r', 10, 90).onChange(u);
+        gui.add(spiroDrawer, 'd', 0, 100).onChange(u);
+        gui.addColor(spiroDrawer, 'color');
 
-        loop = 0;
+        speed = 0;
         hideCirc = false;
 
         mover = document.getElementById('mover');
 
-        mover.style.left = centerPoint.x - R - 32;
-        mover.style.top = centerPoint.y - R;
+        mover.style.left = centerPoint.x - spiroDrawer.R - 32;
+        mover.style.top = centerPoint.y - spiroDrawer.R;
 
         mover.onmousedown = dragCenter.startDrag;
     }
 
     var dragCenter = {
-
         iniMousePos:    {},
         startPos:       {},
         dragging:       null,
@@ -213,12 +236,15 @@ var wtf = new Object();
         },
 
         drag: function (e) {
+            console.log(e.clientX, e.clientY);
+            if( e.clientX < 0 || e.clientY < 0 ) return;
+            
             var x = e.clientX - dragCenter.iniMousePos.x;
             var y = e.clientY - dragCenter.iniMousePos.y;
 
             dragCenter.setPos(x, y);
-            wtf.clearCircles();
-            wtf.drawCirsOnly();
+            spiroDrawer.clearCircles();
+            spiroDrawer.drawCirsOnly();
             
             return false;
         },
@@ -236,8 +262,8 @@ var wtf = new Object();
             dragCenter.dragging.style.left = dragCenter.startPos.x + x + 'px';
             dragCenter.dragging.style.top = dragCenter.startPos.y + y + 'px';
 
-            centerPoint.x = dragCenter.startPos.x + x + R + 20;
-            centerPoint.y = dragCenter.startPos.y + y + R;
+            centerPoint.x = dragCenter.startPos.x + x + spiroDrawer.R + 20;
+            centerPoint.y = dragCenter.startPos.y + y + spiroDrawer.R;
         }
     };
 
@@ -253,19 +279,20 @@ var wtf = new Object();
         return canvas.getContext("2d");
     }
 
-}())
+}());
 
 	</script>
 </head>
 
 <body>
     <div id="menu">
-        <input id="R" type="range" min="10" max="300" value="100" onchange="wtf.alterValues()"/>
-        <input id="r" type="range" min="10" max="90" value="52" onchange="wtf.alterValues()"/>
-        <input id="d" type="range" min="0" max="100" value="75" onchange="wtf.alterValues()"/>
+        <!--input id="R" type="range" min="10" max="300" value="100" onchange="spiroDrawer.alterValues()"/>
+        <input id="r" type="range" min="10" max="90" value="52" onchange="spiroDrawer.alterValues()"/>
+        <input id="d" type="range" min="0" max="100" value="75" onchange="spiroDrawer.alterValues()"/>
+        <input id="s" type="range" min="1" max="5" value="1" onchange="spiroDrawer.alterValues()"/-->
 
-        <img id="play_stop_button" onclick="wtf.toggleAnimation()" src="spirograph_images/play.png" />
-        <img id="show_hide_button" onclick="wtf.toggleCircs()" src="spirograph_images/hide_circ.png" />
+        <img id="play_stop_button" onclick="spiroDrawer.toggleAnimation()" src="spirograph_images/play.png" />
+        <img id="show_hide_button" onclick="spiroDrawer.toggleCircs()" src="spirograph_images/hide_circ.png" />
     </div>
     <div id="mover" style="background: url(spirograph_images/move.png);position: absolute; width: 32px; height: 32px; z-index: 9999; display: inline;"/>
 </body>
