@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+<style type="text/css">
+body {
+    background: black;
+    overflow: hidden;
+    margin: 0;
+}
+#canvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+}
+#corpo {
+    width: 600px;
+    padding: 20px 50px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 2;
+    position: absolute;
+    top: 0;
+}
+</style>
+</head>
+
+<body>
+<div id="holder" style="margin:0px">
+    <!--div id="corpo">
+        <h1>Hello Word!</h1>
+    </div-->
+</div>
+</body>
+
+<script>
+(function trololololo() {
+
+
+function Drawer(pos, color) {
+    this.pos = pos;
+    this.color = color;
+    this.lastWay = 0;
+
+    this.getLasWay = function (way) {
+        this.lastWay = this.lastWay == (way + 2) % 4 ? (this.lastWay+1) % 4 : way;
+        return this.lastWay;
+    }
+}
+
+var ways = [
+    [-1,  0], // up
+    [ 0,  1], // right
+    [ 1,  0], // down
+    [ 0, -1], // left
+];
+
+var canvasEle = document.createElement('canvas');
+canvasEle.width = window.innerWidth;
+canvasEle.height = window.innerHeight;
+
+document.getElementById('holder').appendChild(canvasEle);
+
+var ctx = canvasEle.getContext('2d'),
+    limits = [
+        -canvasEle.height/2,
+         canvasEle.width /2,
+         canvasEle.height/2,
+        -canvasEle.width /2
+    ],
+    drawers = [
+        new Drawer([0, 30], '#3465a4'),
+        new Drawer([0, 30], '#8ae234'),
+        new Drawer([0, 30], '#ad7fa8'),
+        new Drawer([0, 30], '#e9b96e'),
+        new Drawer([-100, 50], '#888a85')
+    ];
+
+ctx.translate(canvasEle.width/2, canvasEle.height/2);
+
+ctx.globalCompositeOperation = 'lighter';
+ctx.globalAlpha = 0.3;
+
+function randomLine(drawer) {
+    var randWay = drawer.getLasWay(Math.floor(Math.random()*4)),
+        randDistance = Math.floor(Math.random()*35)+20 +
+                (Math.floor(Math.random()*10) > 8 ? 50 : 0),
+        distance = [
+            ways[randWay][0]*randDistance,
+            ways[randWay][1]*randDistance
+        ],
+        curPos = drawer.pos;
+    ctx.save();
+    ctx.strokeStyle = drawer.color;
+    ctx.beginPath();
+    ctx.moveTo(curPos[0], curPos[1]);
+    curPos = verifyLimits(plusVec(curPos, distance));
+    drawer.pos = curPos;
+    ctx.lineTo(curPos[0], curPos[1]);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function plusVec(vec1, vec2) {
+    return [vec1[0]+vec2[0], vec1[1]+vec2[1]];
+}
+
+function verifyLimits(pos) {
+    return [pos[0] < limits[3] ? limits[3] :
+            pos[0] > limits[1] ? limits[1] : pos[0],
+            pos[1] < limits[0] ? limits[0] :
+            pos[1] > limits[2] ? limits[2] : pos[1]
+            ];
+}
+
+var timer = setInterval(function() {
+    for (var i=0; i<drawers.length; i++) {
+        randomLine(drawers[i]);
+    }
+}, 1000/60);
+
+})(window);
+</script>
+
+</html>
+

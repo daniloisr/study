@@ -1,0 +1,94 @@
+<!--
+cores:
+	cinzas: #555 #999 #aaa #fff
+	azul: 	#8070aa
+	vermelho: #aa4d4d
+	verde: 	#4daa4d
+-->
+<!doctype html>
+<html>
+<head>
+	<style type="text/css">
+		body {background: #aaa;}
+		#game {width: 400px; height: 400px; margin: 30px auto 0;
+			background: #dedede; border: 2px solid #999; position: relative;}
+		.cel {width: 50px; height: 50px; float: left;}
+		.cel:hover {width: 46px; height: 46px; border: 2px solid #aaa; }
+		.piece {width: 50px; height: 50px; position: absolute;
+			background-position: center; border: 2px solid transparent; }
+		.piece:hover {width: 46px; height: 46px; border: 2px solid #8070aa; }
+		.pawn {background: url('p50px.png');}
+		.white {background: #fff; }
+		.black {background: #555; }
+		.move-option {width: 46px; height: 46px; border: 2px solid #4daa4d;}
+		.selected {width: 46px; height: 46px; border: 2px solid #8070aa; }
+	</style>
+</head>
+
+<body>
+	<div id="game">
+	</div>
+</body>
+
+<script>
+// build game
+var board = [],
+	classCicle = 'black';
+for(var i = 7; i >= 0; i--){
+	board[i] = [];
+	classCicle = classCicle == 'black' ? 'white' : 'black';
+	for(var j = 0; j < 8; j++){
+		var e = document.createElement('div');
+		e.className = 'cel' + ' ' + classCicle;
+		document.getElementById('game').appendChild(e);
+		board[i][j] = e;
+		classCicle = classCicle == 'black' ? 'white' : 'black';
+	}
+}
+
+// Piece classes
+function Piece(){
+    this.e;
+    this.animate = function() {
+        var top = parseInt(this.e.style.top.substring(0, this.e.style.top.length - 2));
+        if(top > 300) {
+            top -= 1;
+            this.e.style.top = top + 'px';
+            console.log(top);
+            var self = this;
+            setTimeout(function(){self.animate()}, 1000/60);
+        }
+    }
+}
+
+function Pawn(position) {
+	this.e = document.createElement('div');
+	this.e.className = 'piece pawn';
+	this.position = position;
+	this.availableMoves = function() {
+		if(this.position.y != 7)
+			return board[this.position.y + 1][this.position.x];
+	}
+	this.placeOnBoard = function(){
+		this.e.style.top = (7 - this.position.y) * 50 + 'px';
+		this.e.style.left = this.position.x * 50 + 'px';
+		document.getElementById('game').appendChild(this.e);
+	}
+}
+Pawn.prototype = new Piece();
+Pawn.prototype.constructor = Pawn;
+
+function Position(x, y){
+	this.x = x;
+	this.y = y;
+}
+
+var pawn = new Pawn(new Position(0, 0));
+pawn.placeOnBoard();
+pawn.e.onclick = function() {
+	pawn.availableMoves().className += " move-option";
+	pawn.e.className += " selected";
+	pawn.animate();
+}
+</script>
+</html>

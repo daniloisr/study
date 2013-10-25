@@ -1,0 +1,78 @@
+
+<!doctype html>
+<html>
+<head>
+  <style type="text/css">
+    body { overflow: hidden; background: black; }
+    canvas { margin: 0; }
+  </style>
+</head>
+
+<body>
+</body>
+
+<script type="text/javascript">
+(function daHadukenRyu() {
+    var canvas = document.createElement('canvas'),
+        ctx = canvas.getContext('2d'),
+        width = window.innerWidth,
+        height = window.innerHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+    document.body.appendChild(canvas);
+
+    var x = width/2>>0,
+        y = height-40,
+        s = 180,
+        a = Math.PI,
+        delta = Math.PI/11,
+        grown = 75/100,
+        minSize = 25;
+
+    function drawline(x, y, x2, y2, c) {
+        ctx.save();
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x2, y2);
+
+        ctx.strokeStyle = c;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function color(x, y) {
+        return ['rgb(',
+                180, ',',
+                (x/width)*256>>0, ',',
+                (y/height)*256>>0, ')'].join('');
+    }
+
+    function branch(x, y, g, d, a, s) {
+        if(s<minSize) return;
+
+        var gx = ~~(s * Math.sin(a)),
+            gy = ~~(s * Math.cos(a)),
+            x2 = x - gx,
+            y2 = y + gy;
+        drawline(x, y, x2, y2, color(x, y));
+
+        branch(x2, y2, g, d, a + d, s * g);
+        branch(x2, y2, g, d, a - d, s * g);
+    }
+
+    var count = 0, step = 0.2, main_delta = delta;
+    var loop = function () {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)'
+        ctx.fillRect(0,0,width,height);
+        delta = main_delta + (count * Math.PI/30);
+        count += step;
+        if(count >= 80 || count < 0) { step *= -1; }
+        branch(x, y, grown, delta, a, s);
+    }
+
+    setInterval(loop, 1000/20);
+})();
+</script>
+</html>
