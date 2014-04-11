@@ -12,10 +12,16 @@
       left: 0;
       bottom: 0;
       right: 0;
+      padding: 0;
+      margin: 0;
     }
 
     div {
-      transition: 'background-color .1s, box-shadow .05s';
+      position: relative;
+      height: 100%;
+      width: 100%;
+      padding: 3%;
+      transition: background-color .3s, box-shadow .3s;
     }
   </style>
 </head>
@@ -23,6 +29,7 @@
 <body>
 
   <script type="text/javascript">
+    // total sketch code....
     colors = ['#BC93C6', '#A6B0D6', '#97C5D9', '#82DBE1', '#52575C'];
 
     i = 0;
@@ -30,36 +37,35 @@
     divs = [];
     d = document.body;
 
-    for(i = 0; i < l*2; i++) {
+    for(i = 0; i < l*2.5; i++) {
       d1 = document.createElement('div');
       d.appendChild(d1);
       d = d1;
-      d.style.height = d.style.width = '100%';
-      d.style.padding = '3%';
-      d.style.background = colors[i];
       divs.push(d);
     }
 
-
     i = 0;
-    t = window.setInterval(function() {
-
-      for(j = 0; j < l*2; j++) {
+    f = function() {
+      for(j = 0, i++; j < l*2.5; j++, i = (i + 1) % l) {
         d = divs[j];
-        c1 = colors[i++];
-        i = i % l;
+        c1 = colors[i];
 
         d.style.backgroundColor = c1;
-        d.style.boxShadow = "0 0 5px 2px " + c1;
-
-        (function (d, c1) {
-          window.setTimeout(function() {
-            d.style.boxShadow = "0 0 0 0 " + c1;
-          }, 50);
-        })(d, c1);
+        d.style.boxShadow = "0 0 10px 0px " + c1;
       }
-      i++;
-    }, 100);
+    };
+    f();
+    t = window.setInterval(f, 300);
+
+    document.body.addEventListener('click', function() {
+      if (t) {
+        window.clearInterval(t);
+        t = false;
+      }
+      else {
+        t = window.setInterval(f, 300);
+      }
+    });
   </script>
 </body>
 </html>
