@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+  <style type="text/css">
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    .square {
+      position: absolute;
+    }
+  </style>
+</head>
+
+<body>
+
+  <script type="text/javascript">
+    function V2(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    V2.prototype.mul = function(factor) {
+      return new V2(this.x * factor, this.y * factor);
+    }
+
+    V2.prototype.add = function(v2) {
+      return new V2(this.x + v2.x, this.y + v2.y);
+    }
+
+    V2.prototype.sub = function(v2) {
+      return new V2(this.x - v2.x, this.y - v2.y);
+    }
+
+    V2.prototype.map = function(f) {
+      return new V2(f(this.x), f(this.y));
+    }
+
+
+    ///
+    var floor = Math.floor;
+    var random = Math.random;
+
+
+    //
+    // CONTAINER
+    window.container = {
+      dimensions: new V2(document.body.clientWidth, document.body.clientHeight)
+    }
+
+
+    var CHANGE_COLOR = false;
+    var COUNT = 4;
+    var DELAY = 300;
+    var SHRINK_FACTOR = .949;
+    var COLORS = ['#BC93C6', '#A6B0D6', '#97C5D9', '#82DBE1', '#52575C'];
+
+    // position, length
+    function Squares(pos, len) {
+      this.pos = pos;
+      this.len = len;
+      this.colorIndex = len;
+      this.parent = false;
+      this.size = new V2(
+          (container.dimensions.x - this.pos.x * 2),
+          (container.dimensions.y - this.pos.y * 2)
+        ).map(floor);
+
+      // e => html element
+      this.e = document.createElement('div');
+      this.e.className = 'square';
+      this.e.style.background = COLORS[len % COLORS.length];
+      this.e.style.transition = 'all ' + DELAY/1000 + 's linear';
+
+      // width = container.width - position
+      this.e.style.width = this.size.x + 'px';
+      this.e.style.height = this.size.y + 'px';
+
+      // check if is appended
+      this.appended = false;
+
+      document.body.appendChild(this.e);
+
+      if (this.len > 0) {
+        this.child = new Squares(this.newPos(pos), this.len - 1);
+        this.child.parent = this;
+      }
+      else {
+        this.child = false;
+      }
+    }
+
+    Squares.prototype.appendToBody = function() {
+      document.body.appendChild(this.e);
+      this.appended = true;
+    }
+
+    Squares.prototype.draw = function() {
+      if (!this.appended) {
+        this.appendToBody();
+      }
+
+      if (this.child) this.child.draw();
+
+      if (CHANGE_COLOR) {
+        if (this.child) {
+          this.e.style.background = this.child.e.style.background;
+        }
+        else {
+          this.colorIndex -= 1;
+          if (this.colorIndex < 0) this.colorIndex = COLORS.length - 1;
+
+          this.e.style.background = COLORS[this.colorIndex % COLORS.length]
+        }
+      }
+    }
+
+    Squares.prototype.newPos = function (pos) {
+        return container.dimensions
+          .sub(container.dimensions.mul(SHRINK_FACTOR))
+          .add(pos)
+          .map(floor);
+    }
+
+    Squares.prototype.moveTo = function (pos, w, h) {
+      // FIXME j name ????
+      var j = this;
+      window.setTimeout(
+        function() {
+          j.e.style.left = pos.x + 'px';
+          j.e.style.top = pos.y + 'px';
+        },
+        DELAY - floor((COUNT - this.len)/COUNT * DELAY));
+
+      if (this.child) {
+        this.child.moveTo(this.newPos(pos), this.e.style.width, this.e.style.height);
+      }
+    }
+
+
+    var squares = new Squares(new V2(0, 0), COUNT);
+    squares.moveTo(new V2(0, 0));
+    squares.draw();
+
+
+    var f = function() {
+      squares.child.moveTo(new V2(random() * 100 + 30, random() * 60 + 20).map(floor));
+      squares.draw();
+    }
+
+    var t = window.setInterval(f, DELAY);
+
+
+    document.body.addEventListener('click', function() {
+      if (t) {
+        window.clearInterval(t);
+        t = false;
+      }
+      else {
+        t = window.setInterval(f, DELAY);
+      }
+    });
+
+  </script>
+</body>
+</html>
