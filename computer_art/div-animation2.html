@@ -34,6 +34,10 @@
       return new V2(this.x * factor, this.y * factor);
     }
 
+    V2.prototype.div = function(factor) {
+      return new V2(this.x / factor, this.y / factor);
+    }
+
     V2.prototype.add = function(v2) {
       return new V2(this.x + v2.x, this.y + v2.y);
     }
@@ -59,18 +63,16 @@
     }
 
 
-    var CHANGE_COLOR = false;
-    var COUNT = 4;
+    var CHANGE_COLOR = true;
+    var COUNT = 7;
     var DELAY = 300;
     var SHRINK_FACTOR = .949;
     var COLORS = ['#BC93C6', '#A6B0D6', '#97C5D9', '#82DBE1', '#52575C'];
 
     // position, length
-    function Squares(pos, len) {
+    function CoffePLusTV(pos, groupIndex) {
       this.pos = pos;
-      this.len = len;
-      this.colorIndex = len;
-      this.parent = false;
+      this.groupIndex = this.colorIndex = groupIndex;
       this.size = new V2(
           (container.dimensions.x - this.pos.x * 2),
           (container.dimensions.y - this.pos.y * 2)
@@ -79,8 +81,8 @@
       // e => html element
       this.e = document.createElement('div');
       this.e.className = 'square';
-      this.e.style.background = COLORS[len % COLORS.length];
-      this.e.style.transition = 'all ' + DELAY/1000 + 's linear';
+      this.e.style.background = COLORS[groupIndex % COLORS.length];
+      this.e.style.transition = 'all ' + DELAY + 'ms linear';
 
       // width = container.width - position
       this.e.style.width = this.size.x + 'px';
@@ -91,26 +93,23 @@
 
       document.body.appendChild(this.e);
 
-      if (this.len > 0) {
-        this.child = new Squares(this.newPos(pos), this.len - 1);
-        this.child.parent = this;
+      if (this.groupIndex > 0) {
+        this.child = new CoffePLusTV(this.newPos(pos), this.groupIndex - 1);
       }
       else {
         this.child = false;
       }
     }
 
-    Squares.prototype.appendToBody = function() {
+    CoffePLusTV.prototype.appendToBody = function() {
       document.body.appendChild(this.e);
       this.appended = true;
     }
 
-    Squares.prototype.draw = function() {
+    CoffePLusTV.prototype.draw = function() {
       if (!this.appended) {
         this.appendToBody();
       }
-
-      if (this.child) this.child.draw();
 
       if (CHANGE_COLOR) {
         if (this.child) {
@@ -123,24 +122,28 @@
           this.e.style.background = COLORS[this.colorIndex % COLORS.length]
         }
       }
+
+      if (this.child) this.child.draw();
     }
 
-    Squares.prototype.newPos = function (pos) {
+    CoffePLusTV.prototype.newPos = function (pos) {
         return container.dimensions
-          .sub(container.dimensions.mul(SHRINK_FACTOR))
+          .div(2) // the minimum size is at half of screen
+          .div(COUNT)
           .add(pos)
           .map(floor);
     }
 
-    Squares.prototype.moveTo = function (pos, w, h) {
+    CoffePLusTV.prototype.moveTo = function (pos, w, h) {
       // FIXME j name ????
       var j = this;
+      // Move child with DELAY/COUNT fraction
       window.setTimeout(
         function() {
           j.e.style.left = pos.x + 'px';
           j.e.style.top = pos.y + 'px';
         },
-        DELAY - floor((COUNT - this.len)/COUNT * DELAY));
+        DELAY - floor((COUNT - this.groupIndex)/COUNT * DELAY));
 
       if (this.child) {
         this.child.moveTo(this.newPos(pos), this.e.style.width, this.e.style.height);
@@ -148,26 +151,27 @@
     }
 
 
-    var squares = new Squares(new V2(0, 0), COUNT);
-    squares.moveTo(new V2(0, 0));
-    squares.draw();
+    var blur = new CoffePLusTV(new V2(0, 0), COUNT);
+    blur.moveTo(new V2(0, 0));
+    blur.draw();
 
 
-    var f = function() {
-      squares.child.moveTo(new V2(random() * 100 + 30, random() * 60 + 20).map(floor));
-      squares.draw();
+    var tick = function() {
+      blur.child.moveTo(new V2(random() * 100 + 30, random() * 60 + 20).map(floor));
+      blur.draw();
     }
 
-    var t = window.setInterval(f, DELAY);
+    tick();
 
+    var timer = window.setInterval(tick, DELAY);
 
     document.body.addEventListener('click', function() {
-      if (t) {
-        window.clearInterval(t);
-        t = false;
+      if (timer) {
+        window.clearInterval(timer);
+        timer = false;
       }
       else {
-        t = window.setInterval(f, DELAY);
+        timer = window.setInterval(tick, DELAY);
       }
     });
 

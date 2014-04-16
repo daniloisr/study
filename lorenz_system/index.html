@@ -73,7 +73,7 @@ var objects = {
 function oblique_projection(w, obj) {
   var oblique_transformation = function(x, y, z) {
     return {
-      x: x + w*y, 
+      x: x + w*y,
       y: z + w*y
     };
   }
@@ -176,7 +176,7 @@ function animation() {
       break;
     }
   }
-  
+
   if(projection_radios[0].checked) {
     ctx.clearRect(-400,-400,800,800);
     w = [
@@ -209,6 +209,6 @@ document.getElementById('canvas').onclick = function(e) {
   }
 };
 
-})(window);
+})();
 </script>
 </html>
