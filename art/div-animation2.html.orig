@@ -16,7 +16,7 @@
       margin: 0;
     }
 
-    .square {
+    div {
       position: absolute;
     }
   </style>
@@ -25,13 +25,22 @@
 <body>
 
   <script type="text/javascript">
+    // Add onresize event
+
+    var floor = Math.floor;
+    var random = Math.random;
+
     function V2(x, y) {
       this.x = x;
       this.y = y;
     }
 
-    V2.prototype.mul = function(factor) {
+    V2.prototype.mulF = function(factor) {
       return new V2(this.x * factor, this.y * factor);
+    }
+
+    V2.prototype.mulV = function(v2) {
+      return new V2(this.x * v2.x, this.y * v2.y);
     }
 
     V2.prototype.div = function(factor) {
@@ -51,44 +60,31 @@
     }
 
 
-    ///
-    var floor = Math.floor;
-    var random = Math.random;
-
-
-    //
-    // CONTAINER
-    window.container = {
-      dimensions: new V2(document.body.clientWidth, document.body.clientHeight)
-    }
-
-
     var CHANGE_COLOR = true;
-    var COUNT = 7;
+    var COUNT = 9;
     var DELAY = 300;
+<<<<<<< HEAD:computer_art/div-animation2.html
+=======
+
+    var DIMENSIONS = new V2(document.body.clientWidth, document.body.clientHeight);
+>>>>>>> 9e6a248b2f5c5eb04641a7419fcb9f930f04dd4a:art/div-animation2.html
     var COLORS = ['#BC93C6', '#A6B0D6', '#97C5D9', '#82DBE1', '#52575C'];
 
-    // position, length
     function CoffePLusTV(pos, groupIndex) {
       this.pos = pos;
       this.groupIndex = this.colorIndex = groupIndex;
       this.size = new V2(
-          (container.dimensions.x - this.pos.x * 2),
-          (container.dimensions.y - this.pos.y * 2)
+          (DIMENSIONS.x - this.pos.x * 2),
+          (DIMENSIONS.y - this.pos.y * 2)
         ).map(floor);
 
       // e => html element
       this.e = document.createElement('div');
-      this.e.className = 'square';
       this.e.style.background = COLORS[groupIndex % COLORS.length];
       this.e.style.transition = 'all ' + DELAY + 'ms linear';
 
-      // width = container.width - position
       this.e.style.width = this.size.x + 'px';
       this.e.style.height = this.size.y + 'px';
-
-      // check if is appended
-      this.appended = false;
 
       document.body.appendChild(this.e);
 
@@ -105,11 +101,7 @@
       this.appended = true;
     }
 
-    CoffePLusTV.prototype.draw = function() {
-      if (!this.appended) {
-        this.appendToBody();
-      }
-
+    CoffePLusTV.prototype.paint = function() {
       if (CHANGE_COLOR) {
         if (this.child) {
           this.e.style.background = this.child.e.style.background;
@@ -120,44 +112,50 @@
 
           this.e.style.background = COLORS[this.colorIndex % COLORS.length]
         }
-      }
 
-      if (this.child) this.child.draw();
+        if (this.child) this.child.paint();
+      }
     }
 
     CoffePLusTV.prototype.newPos = function (pos) {
-        return container.dimensions
-          .div(2) // the minimum size is at half of screen
+        return DIMENSIONS
+          .div(2) // the minimum size is at center of screen
           .div(COUNT)
           .add(pos)
           .map(floor);
     }
 
     CoffePLusTV.prototype.moveTo = function (pos, w, h) {
-      // FIXME j name ????
-      var j = this;
-      // Move child with DELAY/COUNT fraction
+      var self = this;
+
+      // Move with DELAY/COUNT fraction
+      // Move order by groupIndex
       window.setTimeout(
         function() {
-          j.e.style.left = pos.x + 'px';
-          j.e.style.top = pos.y + 'px';
+          self.e.style.left = pos.x + 'px';
+          self.e.style.top = pos.y + 'px';
         },
-        DELAY - floor((COUNT - this.groupIndex)/COUNT * DELAY));
+        DELAY - floor((COUNT - self.groupIndex)/COUNT * DELAY)
+      );
 
-      if (this.child) {
-        this.child.moveTo(this.newPos(pos), this.e.style.width, this.e.style.height);
+      if (self.child) {
+        self.child.moveTo(self.newPos(pos), self.e.style.width, self.e.style.height);
       }
     }
 
 
-    var blur = new CoffePLusTV(new V2(0, 0), COUNT);
-    blur.moveTo(new V2(0, 0));
-    blur.draw();
+    var oldButGood = new CoffePLusTV(new V2(0, 0), COUNT);
+    oldButGood.moveTo(new V2(0, 0));
+    oldButGood.paint();
 
 
     var tick = function() {
-      blur.child.moveTo(new V2(random() * 100 + 30, random() * 60 + 20).map(floor));
-      blur.draw();
+      oldButGood.child.moveTo(
+        new V2(random(), random())
+        .mulV(DIMENSIONS.div(2).div(COUNT))
+        .mulF(2)
+        .map(floor));
+      oldButGood.paint();
     }
 
     tick();
