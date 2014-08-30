@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+<head>
+<style type="text/css">
+body {
+  overflow: hidden;
+  margin: 0;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+}
+</style>
+</head>
+
+<body>
+</body>
+
+<script>
+(function trololololo() {
+  function r(i) { return ~~(Math.random() * i); }
+
+  var w = window.innerWidth/2.5, h = window.innerHeight/2.5;
+  var pi = Math.PI, sin = Math.sin, cos = Math.cos;
+  var timer;
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+
+  canvas.width = w;
+  canvas.height = h;
+
+  document.body.appendChild(canvas);
+
+  function drawCircle(ctx, x, y, r, c, l) {
+    ctx.beginPath();
+    var h = ~~( c[0][0]*c[2] + c[1][0]*(1-c[2]) );
+    var s = ~~( c[0][1]*c[2] + c[1][1]*(1-c[2]) );
+    ctx.fillStyle = 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
+    ctx.arc(x, y, r, 0, pi*2, true);
+    ctx.closePath();
+    ctx.fill();
+    ctx.clip();
+  }
+
+  var frameRate = 1000/10, ltime = false, ftime = false, time, times = [];
+  var c1, c2;
+  for(var i=0; i<60; i++) times.push(0);
+
+  var c = 20;
+  var tickCount = 0;
+  var speedTick = 0, speed1, speed2, speedDiff = 0;
+
+  function tick() {
+    time = Date.now();
+    if(ltime == false) ltime = time;
+    if(ftime == false) ftime = time;
+
+    if (time - ltime < frameRate) return;
+    times.push(time - ltime);
+    times.shift();
+    ltime = time;
+
+    if(time - ftime > 1000) {
+      console.log(~~(1000 * times.length/times.reduce(function(v, i) { return v + i }, 0)));
+      ftime = time;
+    }
+
+    // speed change
+    if(speedTick >= speedDiff) {
+      speedTick = 0;
+      if (speed2 == undefined) speed1 = frameRate;
+      else speed1 = speed2;
+      speed2 = 1000/(10 + r(10));
+      speedDiff = 20;
+      frameRate = speed1;
+    }
+    else {
+      frameRate = ~~(speed1 + (speed2 - speed1) * sin(pi/2 * speedTick/speedDiff));
+      speedTick += 1;
+    }
+
+    // color change
+    if(tickCount % c == 0) {
+      if(c1 == undefined) c1 = [r(360), r(100)];
+      else c1 = c2;
+
+      c2 = [r(360), r(100)];
+    }
+
+    var cycle = ~~(c * (1 + sin((tickCount + c) * pi*2/c))/2);
+    var l = ~~(cycle * 50/c) + 20;
+    var h = ~~(c1[0] * (c+1)/c);
+    var s = ~~(c1[1] * (c+1)/c);
+
+    ctx.fillStyle = 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2);
+
+    for(var i = c; i >= 0; i--) {
+      var cycle = ~~(c * (1 + sin((tickCount - i) * pi*2/c))/2);
+      var cyclep = ~~(c * (1 + sin((tickCount*.3 - i) * pi*2/c))/2);
+      var coscyclep = ~~(c * (1 + cos((tickCount*.3 - i) * pi*2/c))/2);
+      var l = ~~(cycle * 50/c) + 20;
+      drawCircle(ctx,
+          cyclep*8 - c*(c/5),
+          coscyclep*8 - c*(c/5),
+          w/1.2/c * i,
+          [c1, c2, i/c],
+          l);
+    }
+
+    ctx.restore();
+
+    tickCount += 1;
+  }
+
+  var timer = setInterval(function() {
+    tick();
+  }, 1000/60);
+
+  document.body.onclick = function() {
+    if(timer) {
+      clearInterval(timer);
+      timer = false;
+    }
+    else {
+      timer = setInterval(function() {
+        tick();
+      }, 1000/60);
+    }
+  };
+
+})();
+</script>
+
+</html>
+
