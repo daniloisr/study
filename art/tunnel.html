@@ -19,8 +19,8 @@ canvas {
 </body>
 
 <script>
-(function trololololo() {
-  function r(i) { return ~~(Math.random() * i); }
+(function () {
+  function ri(i) { return ~~(Math.random() * i); }
 
   var w = window.innerWidth/2.5, h = window.innerHeight/2.5;
   var pi = Math.PI, sin = Math.sin, cos = Math.cos;
@@ -46,7 +46,7 @@ canvas {
 
   var frameRate = 1000/10, ltime = false, ftime = false, time, times = [];
   var c1, c2;
-  for(var i=0; i<60; i++) times.push(0);
+  fori(var i=0; i<60; i++) times.push(0);
 
   var c = 20;
   var tickCount = 0;
@@ -72,7 +72,7 @@ canvas {
       speedTick = 0;
       if (speed2 == undefined) speed1 = frameRate;
       else speed1 = speed2;
-      speed2 = 1000/(10 + r(10));
+      speed2 = 1000/(10 + ri(10));
       speedDiff = 20;
       frameRate = speed1;
     }
@@ -83,10 +83,10 @@ canvas {
 
     // color change
     if(tickCount % c == 0) {
-      if(c1 == undefined) c1 = [r(360), r(100)];
+      if(c1 == undefined) c1 = [ri(360), ri(100)];
       else c1 = c2;
 
-      c2 = [r(360), r(100)];
+      c2 = [ri(360), ri(100)];
     }
 
     var cycle = ~~(c * (1 + sin((tickCount + c) * pi*2/c))/2);
@@ -103,7 +103,7 @@ canvas {
     for(var i = c; i >= 0; i--) {
       var cycle = ~~(c * (1 + sin((tickCount - i) * pi*2/c))/2);
       var cyclep = ~~(c * (1 + sin((tickCount*.3 - i) * pi*2/c))/2);
-      var coscyclep = ~~(c * (1 + cos((tickCount*.3 - i) * pi*2/c))/2);
+      var coscyclep = ~~(c * (1 + cos((tickCount*.1 - i) * pi*2/c))/2);
       var l = ~~(cycle * 50/c) + 20;
       drawCircle(ctx,
           cyclep*8 - c*(c/5),
@@ -133,6 +133,12 @@ canvas {
       }, 1000/60);
     }
   };
+
+  window.onresize = function() {
+    w = window.innerWidth/2.5, h = window.innerHeight/2.5;
+    canvas.width = w;
+    canvas.height = h;
+  }
 
 })();
 </script>
