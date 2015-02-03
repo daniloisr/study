@@ -1,0 +1,240 @@
+body {
+  margin: 0;
+  overflow: hidden; }
+
+.tunnel div {
+  border-radius: 50%;
+  position: absolute; }
+.tunnel .t-0 {
+  border: 80px solid;
+  width: 560px;
+  height: 560px;
+  z-index: 15;
+  top: 3.33333%;
+  left: 37.33333px;
+  animation: color 5s ease-in 2.25s infinite; }
+@keyframes color {
+  25% {
+    border-color: #172319; }
+  50% {
+    border-color: #2a4242; }
+  75% {
+    border-color: #2b2f45; } }
+.tunnel .t-1 {
+  border: 80px solid;
+  width: 520px;
+  height: 520px;
+  z-index: 14;
+  top: 6.66667%;
+  left: 74.66667px;
+  animation: color 5s ease-in 2.1s infinite; }
+@keyframes color {
+  25% {
+    border-color: #19281b; }
+  50% {
+    border-color: #2c4848; }
+  75% {
+    border-color: #2d324e; } }
+.tunnel .t-2 {
+  border: 80px solid;
+  width: 480px;
+  height: 480px;
+  z-index: 13;
+  top: 10.0%;
+  left: 112px;
+  animation: color 5s ease-in 1.95s infinite; }
+@keyframes color {
+  25% {
+    border-color: #1a2d1e; }
+  50% {
+    border-color: #2d4d4d; }
+  75% {
+    border-color: #2e3556; } }
+.tunnel .t-3 {
+  border: 80px solid;
+  width: 440.0px;
+  height: 440.0px;
+  z-index: 12;
+  top: 13.33333%;
+  left: 149.33333px;
+  animation: color 5s ease-in 1.8s infinite; }
+@keyframes color {
+  25% {
+    border-color: #1c3220; }
+  50% {
+    border-color: #2f5353; }
+  75% {
+    border-color: #30385f; } }
+.tunnel .t-4 {
+  border: 80px solid;
+  width: 400px;
+  height: 400px;
+  z-index: 11;
+  top: 16.66667%;
+  left: 186.66667px;
+  animation: color 5s ease-in 1.65s infinite; }
+@keyframes color {
+  25% {
+    border-color: #1e3722; }
+  50% {
+    border-color: #305858; }
+  75% {
+    border-color: #303a69; } }
+.tunnel .t-5 {
+  border: 80px solid;
+  width: 360px;
+  height: 360px;
+  z-index: 10;
+  top: 20%;
+  left: 224px;
+  animation: color 5s ease-in 1.5s infinite; }
+@keyframes color {
+  25% {
+    border-color: #1f3d24; }
+  50% {
+    border-color: #315e5e; }
+  75% {
+    border-color: #313c72; } }
+.tunnel .t-6 {
+  border: 80px solid;
+  width: 320px;
+  height: 320px;
+  z-index: 9;
+  top: 23.33333%;
+  left: 261.33333px;
+  animation: color 5s ease-in 1.35s infinite; }
+@keyframes color {
+  25% {
+    border-color: #214226; }
+  50% {
+    border-color: #316464; }
+  75% {
+    border-color: #313e7c; } }
+.tunnel .t-7 {
+  border: 80px solid;
+  width: 280px;
+  height: 280px;
+  z-index: 8;
+  top: 26.66667%;
+  left: 298.66667px;
+  animation: color 5s ease-in 1.2s infinite; }
+@keyframes color {
+  25% {
+    border-color: #224828; }
+  50% {
+    border-color: #326a6a; }
+  75% {
+    border-color: #313f87; } }
+.tunnel .t-8 {
+  border: 80px solid;
+  width: 240px;
+  height: 240px;
+  z-index: 7;
+  top: 30%;
+  left: 336px;
+  animation: color 5s ease-in 1.05s infinite; }
+@keyframes color {
+  25% {
+    border-color: #234d2a; }
+  50% {
+    border-color: #337171; }
+  75% {
+    border-color: #304191; } }
+.tunnel .t-9 {
+  border: 80px solid;
+  width: 200px;
+  height: 200px;
+  z-index: 6;
+  top: 33.33333%;
+  left: 373.33333px;
+  animation: color 5s ease-in 0.9s infinite; }
+@keyframes color {
+  25% {
+    border-color: #24532c; }
+  50% {
+    border-color: #337777; }
+  75% {
+    border-color: #30429c; } }
+.tunnel .t-10 {
+  border: 80px solid;
+  width: 160px;
+  height: 160px;
+  z-index: 5;
+  top: 36.66667%;
+  left: 410.66667px;
+  animation: color 5s ease-in 0.75s infinite; }
+@keyframes color {
+  25% {
+    border-color: #24592d; }
+  50% {
+    border-color: #337e7e; }
+  75% {
+    border-color: #2e43a8; } }
+.tunnel .t-11 {
+  border: 80px solid;
+  width: 120px;
+  height: 120px;
+  z-index: 4;
+  top: 40%;
+  left: 448px;
+  animation: color 5s ease-in 0.6s infinite; }
+@keyframes color {
+  25% {
+    border-color: #255f2f; }
+  50% {
+    border-color: #338484; }
+  75% {
+    border-color: #2d43b4; } }
+.tunnel .t-12 {
+  border: 80px solid;
+  width: 80px;
+  height: 80px;
+  z-index: 3;
+  top: 43.33333%;
+  left: 485.33333px;
+  animation: color 5s ease-in 0.45s infinite; }
+@keyframes color {
+  25% {
+    border-color: #266630; }
+  50% {
+    border-color: #338b8b; }
+  75% {
+    border-color: #2b44c0; } }
+.tunnel .t-13 {
+  border: 80px solid;
+  width: 40px;
+  height: 40px;
+  z-index: 2;
+  top: 46.66667%;
+  left: 522.66667px;
+  animation: color 5s ease-in 0.3s infinite; }
+@keyframes color {
+  25% {
+    border-color: #266c32; }
+  50% {
+    border-color: #339292; }
+  75% {
+    border-color: #2944cc; } }
+.tunnel .t-14 {
+  border: 80px solid;
+  width: 0px;
+  height: 0px;
+  z-index: 1;
+  top: 50%;
+  left: 560px;
+  animation: color 5s ease-in 0.15s infinite; }
+@keyframes color {
+  25% {
+    border-color: #267333; }
+  50% {
+    border-color: #339999; }
+  75% {
+    border-color: #2644d9; } }
+.tunnel .t-0 {
+  z-index: 0;
+  border: 999px solid;
+  border-radius: 0;
+  top: 0;
+  left: 0; }
+
+/*# sourceMappingURL=tunnel.css.map */

@@ -1,0 +1,42 @@
+$w: 600px
+$h: 600px
+$c: 15
+$b: 80px
+
+body
+  margin: 0
+  overflow: hidden
+
+@mixin s($i)
+  $j: $c - $i
+  $ratio: ($j - 1)/$c
+  $c-ratio: 1 - $ratio
+  $w1: $w * $ratio
+  border: $b solid
+  width: $w1
+  height: $w1
+  z-index: $c - $i
+  top: 50% * $c-ratio
+  left: $w - $w1 - $b * $c-ratio/2
+  animation: color 5s ease-in #{$j * .15}s infinite
+  @keyframes color
+    25%
+      border-color: hsl(130deg, $c-ratio * 30% + 20%, $c-ratio * 20% + 10%)
+    50%
+      border-color: hsl(180deg, $c-ratio * 30% + 20%, $c-ratio * 20% + 20%)
+    75%
+      border-color: hsl(230deg, $c-ratio * 50% + 20%, $c-ratio * 30% + 20%)
+
+.tunnel
+  div
+    border-radius: 50%
+    position: absolute
+  @for $i from 0 to $c
+    .t-#{$i}
+      @include s($i)
+  .t-0
+    z-index: 0
+    border: 999px solid
+    border-radius: 0
+    top: 0
+    left: 0
