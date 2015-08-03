@@ -1,15 +1,11 @@
 module Main where
 
-import Html exposing (..)
+import Scorer exposing (score)
+import Html
 import String
 
-
-main : Html
+main : Html.Html
 main =
-  List.map toString lists
-    |> List.foldr String.append ""
-    |> text
-
-
-lists : List number
-lists = [1, 2, 3]
+  score "aabc" "abc"
+    |> toString
+    |> Html.text
