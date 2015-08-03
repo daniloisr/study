@@ -4,36 +4,37 @@ import String exposing (indexes, length, fromChar, toList)
 import Maybe exposing (withDefault)
 import List exposing (head, append)
 
-type alias ScoreStruct =
+type alias Score =
   { acc: Float
-  , sequencialIndex: Int
-  , vals: List Float
+  , nextIndex: Int
   , indexes: List Int
   , string: String
   }
 
 -- simple score based on https://github.com/joshaven/string_score/blob/master/string_score.js
-score : String -> String -> ScoreStruct
-score a b =
+score : String -> String -> Float
+score string word =
   let
     result = List.foldl
-      (\a b ->
-        let
-          x = (indexes (fromChar a) b.string)
-            |> head
-            |> withDefault -1
-          val = if x == b.sequencialIndex then 0.7 else 0.1
-          nextIndex = x + 1
-        in
-          { b | acc <- b.acc + val
-              , indexes <- (append b.indexes [x])
-              , vals <- (append b.vals [val])
-              , sequencialIndex <- nextIndex
-              })
-      { acc = 0, indexes = [], string = a, sequencialIndex = 0, vals = [] }
-      (toList b)
+      computeScore
+      { acc = 0, indexes = [], string = string, nextIndex = 0 }
+      (toList word)
 
-    aLen = length a |> toFloat
-    bLen = length b |> toFloat
+    stringLen = length string |> toFloat
+    wordLen = length word |> toFloat
   in
-    { result | acc <- 0.5 * (result.acc / aLen + result.acc / bLen) }
+    0.5 * (result.acc / stringLen + result.acc / wordLen)
+
+computeScore : Char -> Score -> Score
+computeScore char struct =
+  let
+    index = (indexes (fromChar char) struct.string)
+      |> head
+      |> withDefault -1
+    val = if index == struct.nextIndex then 0.7 else 0.1
+    nextIndex = index + 1
+  in
+    { struct | acc <- struct.acc + val
+             , indexes <- (append struct.indexes [index])
+             , nextIndex <- nextIndex
+             }
