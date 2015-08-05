@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+
+    <script type="text/javascript" src="elm.js"></script>
+    <script type="text/javascript">
+      var elm = Elm.worker(Elm.Integration, { documentLoaded: [] });
+
+      window.onload = function() {
+        elm.ports.documentLoaded.send([]);
+      };
+
+      elm.ports.print.subscribe(function() {
+        console.log('Hello world!');
+      });
+    </script>
+  </body>
+</html>
