@@ -8,4 +8,4 @@ port documentLoaded : Signal ()
 
 port print : Signal (Maybe Int)
 port print =
-  (Basics.always Nothing) <~ documentLoaded
+  (always Nothing) <~ documentLoaded
