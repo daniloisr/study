@@ -8,15 +8,15 @@
 
     <script type="text/javascript" src="elm.js"></script>
     <script type="text/javascript">
-      var elm = Elm.worker(Elm.Integration, { documentLoaded: [] });
+      var elm = Elm.fullscreen(Elm.Integration, { documentLoaded: [] });
 
       window.onload = function() {
-        elm.ports.documentLoaded.send([]);
+        elm.ports.documentLoaded.send(["teste"]);
       };
 
-      elm.ports.print.subscribe(function() {
-        console.log('Hello world!');
-      });
+      // elm.ports.print.subscribe(function(messages) {
+      //   console.log(messages);
+      // });
     </script>
   </body>
 </html>

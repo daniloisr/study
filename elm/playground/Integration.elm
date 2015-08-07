@@ -1,11 +1,14 @@
 module Integration where
 
-import Graphics.Element exposing (..)
-import Signal exposing ((<~))
+import Html exposing (Html)
 import String
 
-port documentLoaded : Signal ()
+port documentLoaded : Signal (List String)
 
-port print : Signal (Maybe Int)
-port print =
-  (always Nothing) <~ documentLoaded
+-- port print : Signal (List String)
+-- port print =
+--   identity <~ documentLoaded
+
+main : Signal Html
+main =
+  Signal.map (\n -> Html.text (List.foldr String.append "" n)) documentLoaded
