@@ -20,7 +20,7 @@ Elm.Native.Popup.make = function(localRuntime) {
     chrome.tabs.query(queryInfo, function(tabs) {
       var tab = tabs[0];
       var url = tab.url;
-      return callback(Task.succeed(url));
+      return callback(Task.succeed([url]));
     });
   });
 
