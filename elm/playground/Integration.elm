@@ -11,4 +11,12 @@ port documentLoaded : Signal (List String)
 
 main : Signal Html
 main =
-  Signal.map (\n -> Html.text (List.foldr String.append "" n)) documentLoaded
+  Signal.map
+    (\x -> Html.ul [] (view x))
+    documentLoaded
+
+-- (Html.div [] (\n -> List.map (\x -> Html.li x) n))
+
+view : List String -> List Html
+view items =
+  List.map (\x -> Html.li [] [Html.text x]) items

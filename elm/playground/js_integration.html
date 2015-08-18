@@ -11,7 +11,7 @@
       var elm = Elm.fullscreen(Elm.Integration, { documentLoaded: [] });
 
       window.onload = function() {
-        elm.ports.documentLoaded.send(["teste"]);
+        elm.ports.documentLoaded.send(['foo', 'bar']);
       };
 
       // elm.ports.print.subscribe(function(messages) {
