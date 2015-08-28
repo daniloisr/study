@@ -1,24 +1,19 @@
 module Popup where
 
-import Native.Popup
-
 import Task exposing (Task, andThen)
 import Html exposing (Html)
 import Signal exposing (Signal)
 import String
+import List
 
-contentMailbox : Signal.Mailbox String
-contentMailbox =
-  Signal.mailbox ""
-
-currentTab : Task x String
-currentTab =
-  Native.Popup.getCurrentTabUrl
-
-port runner : Task x ()
-port runner =
-  currentTab `andThen` (Signal.send contentMailbox.address)
+port tabs : Signal (List String)
 
 main : Signal Html
 main =
-  Signal.map Html.text contentMailbox.signal
+  Signal.map
+    (\x -> Html.ul [] (view x))
+    tabs
+
+view : List String -> List Html
+view items =
+  List.map (\x -> Html.li [] [Html.text x]) items
