@@ -6,7 +6,9 @@ import Signal exposing (Signal)
 import String
 import List
 
-port tabs : Signal (List String)
+port tabs : Signal (List Tab)
+
+type alias Tab = { title:String, url:String }
 
 main : Signal Html
 main =
@@ -14,6 +16,6 @@ main =
     (\x -> Html.ul [] (view x))
     tabs
 
-view : List String -> List Html
+view : List Tab -> List Html
 view items =
-  List.map (\x -> Html.li [] [Html.text x]) items
+  List.map (\x -> Html.li [] [Html.text x.title]) items
