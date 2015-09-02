@@ -1,4 +1,4 @@
-module Popup where
+module Tabs where
 
 import Task exposing (Task, andThen)
 import Html exposing (Html)

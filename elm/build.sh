@@ -1,2 +1,2 @@
 #!/bin/sh
-elm-make src/Popup.elm --output src/popup-elm.js
+elm-make src/Tabs.elm --output src/tabs-elm.js
