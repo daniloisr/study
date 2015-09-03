@@ -1,4 +1,6 @@
-chrome.browserAction.onClicked.addListener(function(tab) {
+chrome.commands.onCommand.addListener(function(command) {
+  if(command != 'show-tabs-list') return;
+
   var lastWindowId;
   chrome.windows.getCurrent(function(window) {
     lastWindowId = window.id;

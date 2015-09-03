@@ -4,10 +4,17 @@
   "name": "Tabs!",
   "description": "",
   "version": "0.0.0",
-  "browser_action": { "default_icon": "icon.png" },
   "permissions": ["tabs"],
+  "commands": {
+    "show-tabs-list": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space"
+      },
+      "description": "Show Tab List"
+    }
+  },
   "background": {
-    "persistent": false,
+    "persistent": true,
     "scripts": ["background.js"]
   }
 }
