@@ -1,7 +1,6 @@
 (function() {
   document.addEventListener('DOMContentLoaded', function() {
     var div = document.querySelector('#container');
-    var elm = Elm.embed(Elm.Tabs, div, { tabs: [] });
 
     chrome.runtime.sendMessage({}, function(data) {
       chrome.tabs.getCurrent(function(tab) {
@@ -11,12 +10,13 @@
           return tab.id !== currentTab.id
         });
 
-        elm.ports.tabs.send(tabs);
+        var elm = Elm.embed(Elm.Tabs, div, { getTabs: tabs });
+
+        elm.ports.changeTab.subscribe(function(model) {
+          var selected = model.tabs.filter(function(t) { return t.active })[0];
+          chrome.runtime.sendMessage({command: 'switch-tab', tabId: selected.id});
+        });
       });
     });
-
-    elm.ports.changeTab.subscribe(function(id) {
-      chrome.runtime.sendMessage({command: 'switch-tab', tabId: id});
-    })
   });
 })();
