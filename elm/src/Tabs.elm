@@ -14,6 +14,7 @@ import Keyboard
 type Action
   = NoOp
   | ChangeTab Int
+  | KeyPressed Int
 
 
 type alias Model =
@@ -37,7 +38,12 @@ main =
 
 model : Signal Model
 model =
-  Signal.foldp update initialModel actions.signal
+  Signal.foldp
+    update
+    initialModel
+    (Signal.merge
+      (Signal.map identity actions.signal)
+      (Signal.map KeyPressed Keyboard.presses))
 
 
 initialModel : Model
@@ -54,13 +60,16 @@ initModel tabs =
 
 view : Model -> Html
 view model =
-  ul [] (
-    List.map
-    (\x ->
-      li
-      [onClick actions.address (ChangeTab x.id)]
-      [text x.title])
-    model.tabs)
+  div []
+    [ ul [] (
+        List.map
+        (\x ->
+          li
+          [onClick actions.address (ChangeTab x.id)]
+          [text x.title])
+        model.tabs)
+    , text (toString model.lastKey)
+    ]
 
 
 actions : Signal.Mailbox Action
@@ -77,6 +86,14 @@ update action model =
       let updateTab t = if t.id == id then { t | active <- True } else { t | active <- False }
       in
         { model | tabs <- List.map updateTab model.tabs }
+
+    KeyPressed key ->
+      { model | lastKey <- key }
+
+
+keyPressed : Signal Signal.Message
+keyPressed =
+  Signal.map (\x -> Signal.message actions.address (KeyPressed x)) Keyboard.presses
 
 
 port changeTab : Signal Model
