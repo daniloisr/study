@@ -1,12 +1,7 @@
 chrome.commands.onCommand.addListener(function(command) {
-  if(command != 'show-tabs-list') return;
+  if (command != 'show-tabs-list') return;
 
-  var lastWindowId;
-  chrome.windows.getCurrent(function(window) {
-    lastWindowId = window.id;
-  });
-
-  var opts = {
+  chrome.windows.create({
     width: 200,
     height: 200,
     left: 200,
@@ -14,15 +9,19 @@ chrome.commands.onCommand.addListener(function(command) {
     url: chrome.runtime.getURL('tabs.html'),
     focused: true,
     type: 'popup'
-  };
+  });
 
-  chrome.windows.create(opts);
+  chrome.runtime.onMessage.addListener(function(msg, _, response) {
+    switch(msg.command) {
+      case 'switch-tab':
+        chrome.tabs.update(msg.tabId, { active: true });
+        break;
+      default:
+        chrome.tabs.query({}, function(tabs) {
+          response({ tabs: tabs });
+        });
+    }
 
-  chrome.runtime.onMessage.addListener(function(_, _, response) {
-    console.log(lastWindowId);
-    chrome.tabs.query({windowId: lastWindowId}, function(tabs) {
-      response({tabs: tabs});
-    });
     return true;
   });
 });
