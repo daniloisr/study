@@ -2,7 +2,7 @@ chrome.commands.onCommand.addListener(function(command) {
   if (command != 'show-tabs-list') return;
 
   chrome.windows.create({
-    width: 200,
+    width: 400,
     height: 200,
     left: 200,
     top: 200,

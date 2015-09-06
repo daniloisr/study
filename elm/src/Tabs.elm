@@ -9,12 +9,13 @@ import Maybe
 import String
 import List
 
-type Action =
-  NoOp
+type Action
+  = NoOp
+  | ChangeTab Int
 
 port tabs : Signal (List Tab)
 
-type alias Tab = { title:String, url:String }
+type alias Tab = { title:String, url:String, id:Int }
 
 main : Signal Html
 main =
@@ -27,7 +28,7 @@ view items =
   List.map
         (\x ->
           li
-          [onClick actions.address NoOp]
+          [onClick actions.address (ChangeTab x.id)]
           [text x.title])
         items
 
@@ -35,6 +36,10 @@ actions : Signal.Mailbox Action
 actions =
   Signal.mailbox NoOp
 
-port changeTab : Signal (Maybe Int)
+port changeTab : Signal Int
 port changeTab =
-  (always Nothing) <~ actions.signal
+  (\action ->
+    case action of
+      NoOp -> 0
+      ChangeTab id -> id
+  ) <~ actions.signal
