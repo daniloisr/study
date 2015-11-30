@@ -4,7 +4,7 @@ import Task exposing (Task, andThen)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Signal exposing (Signal, Address, (<~))
+import Signal exposing (Signal, Address)
 import Maybe
 import String
 import List
@@ -83,12 +83,12 @@ update action model =
     NoOp -> model
 
     ChangeTab id ->
-      let updateTab t = if t.id == id then { t | active <- True } else { t | active <- False }
+      let updateTab t = if t.id == id then { t | active = True } else { t | active = False }
       in
-        { model | tabs <- List.map updateTab model.tabs }
+        { model | tabs = List.map updateTab model.tabs }
 
     KeyPressed key ->
-      { model | lastKey <- key }
+      { model | lastKey = key }
 
 
 keyPressed : Signal Signal.Message
