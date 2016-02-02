@@ -2,12 +2,16 @@ import Color exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import List exposing (repeat, map)
+import Mouse
+import Text
+import Color
+import Window
 
 type alias Model =
-  { s : Float
-  , p : Float
-  , r : Int
-  , c : Int
+  { s : Float -- size
+  , p : Float -- padding
+  , r : Int   -- rows
+  , c : Int   -- coluns
   }
 
 game : Model
@@ -18,8 +22,8 @@ game =
   , c = 6
   }
 
-main : Element
-main =
+main1 : Element
+main1 =
   collage 400 400
             (map
              (\count ->
@@ -37,3 +41,16 @@ main =
 alphaBlue : Color
 alphaBlue =
   rgb 100 100 200
+
+
+view : (Int, Int) -> (Int, Int) -> Element
+view (x, y) (w, h) =
+  collage w h
+    [ rect 10 10
+        |> filled Color.green
+        |> move ((toFloat -w/2) + (toFloat x), (toFloat h/2) + (toFloat -y))
+    ]
+
+main : Signal Element
+main =
+  Signal.map2 view Mouse.position Window.dimensions
