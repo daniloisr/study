@@ -43,14 +43,39 @@ alphaBlue =
   rgb 100 100 200
 
 
+
+
 view : (Int, Int) -> (Int, Int) -> Element
 view (x, y) (w, h) =
   collage w h
-    [ rect 10 10
-        |> filled Color.green
-        |> move ((toFloat -w/2) + (toFloat x), (toFloat h/2) + (toFloat -y))
+    [ square (x, y)
+    , Text.fromString (toString (x, y))
+      |> leftAligned
+      |> toForm
     ]
+
+square : (Int, Int) -> Form
+square (x, y) =
+  let
+    color = if x < 500 && y < 500 then Color.green else Color.blue
+  in
+    rect 100 100 |> filled color
 
 main : Signal Element
 main =
-  Signal.map2 view Mouse.position Window.dimensions
+  Signal.map2 view (Signal.sampleOn Mouse.clicks Mouse.position) Window.dimensions
+
+
+
+
+mainClick : Signal Element
+mainClick =
+  Signal.map show countClick
+
+countClick : Signal (Int, Int)
+countClick =
+  Signal.foldp
+    (\(x, y) (mx, my) -> (x + mx, y + my))
+    (0, 0)
+    (Signal.sampleOn Mouse.clicks Mouse.position)
+    
