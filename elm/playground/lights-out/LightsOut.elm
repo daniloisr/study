@@ -48,18 +48,35 @@ alphaBlue =
 view : (Int, Int) -> (Int, Int) -> Element
 view (x, y) (w, h) =
   collage w h
-    [ square (x, y)
-    , Text.fromString (toString (x, y))
+    [ drawSquare (x - w//2, h//2 - y)
+    , Text.fromString (toString (x - w//2, h//2 - y))
       |> leftAligned
       |> toForm
     ]
 
-square : (Int, Int) -> Form
-square (x, y) =
+type alias Square =
+  { x : Float
+  , y : Float
+  , size : Float
+  }
+
+model : Square
+model =
+  { x = 0
+  , y = 0
+  , size = 100
+  }
+
+drawSquare : (Int, Int) -> Form
+drawSquare (x, y) =
   let
-    color = if x < 500 && y < 500 then Color.green else Color.blue
+    x1 = (round model.x) - (round (model.size/2))
+    y1 = (round model.y) - (round (model.size/2))
+    x2 = (round model.x) + (round (model.size/2))
+    y2 = (round model.y) + (round (model.size/2))
+    color = if x >= x1 && x <= x2 && y >= y1 && y <= y2 then Color.red else Color.blue
   in
-    rect 100 100 |> filled color
+    square model.size |> filled color |> move (model.x, model.y)
 
 main : Signal Element
 main =
@@ -68,14 +85,14 @@ main =
 
 
 
-mainClick : Signal Element
-mainClick =
-  Signal.map show countClick
+-- mainClick : Signal Element
+-- mainClick =
+--   Signal.map show countClick
 
-countClick : Signal (Int, Int)
-countClick =
-  Signal.foldp
-    (\(x, y) (mx, my) -> (x + mx, y + my))
-    (0, 0)
-    (Signal.sampleOn Mouse.clicks Mouse.position)
+-- countClick : Signal (Int, Int)
+-- countClick =
+--   Signal.foldp
+--     (\(x, y) (mx, my) -> (x + mx, y + my))
+--     (0, 0)
+--     (Signal.sampleOn Mouse.clicks Mouse.position)
     
