@@ -1,7 +1,7 @@
 import Color exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
-import List exposing (repeat, map)
+import List
 import Mouse
 import Text
 import Color
@@ -25,7 +25,7 @@ game =
 main1 : Element
 main1 =
   collage 400 400
-            (map
+            (List.map
              (\count ->
                 let
                   distance = game.s + game.p
@@ -48,35 +48,29 @@ alphaBlue =
 view : (Int, Int) -> (Int, Int) -> Element
 view (x, y) (w, h) =
   collage w h
-    [ drawSquare (x - w//2, h//2 - y)
+    [ drawSquare (x - w//2, h//2 - y) (List.head model)
+    , drawSquare (x - w//2, h//2 - y) (List.head (List.reverse model))
     , Text.fromString (toString (x - w//2, h//2 - y))
       |> leftAligned
       |> toForm
     ]
 
-type alias Square =
-  { x : Float
-  , y : Float
-  , size : Float
-  }
+type state = ON | OFF
 
-model : Square
-model =
-  { x = 0
-  , y = 0
-  , size = 100
-  }
-
-drawSquare : (Int, Int) -> Form
-drawSquare (x, y) =
-  let
-    x1 = (round model.x) - (round (model.size/2))
-    y1 = (round model.y) - (round (model.size/2))
-    x2 = (round model.x) + (round (model.size/2))
-    y2 = (round model.y) + (round (model.size/2))
-    color = if x >= x1 && x <= x2 && y >= y1 && y <= y2 then Color.red else Color.blue
-  in
-    square model.size |> filled color |> move (model.x, model.y)
+drawSquare : (Int, Int) -> Maybe Square -> Form
+drawSquare (x, y) s =
+  case s of
+    Just s ->
+      let
+        x1 = (round s.x) - (round (s.size/2))
+        y1 = (round s.y) - (round (s.size/2))
+        x2 = (round s.x) + (round (s.size/2))
+        y2 = (round s.y) + (round (s.size/2))
+        color = if x >= x1 && x <= x2 && y >= y1 && y <= y2 then Color.red else Color.blue
+      in
+        square s.size |> filled color |> move (s.x, s.y)
+    Nothing ->
+      toForm (spacer 0 0)
 
 main : Signal Element
 main =
