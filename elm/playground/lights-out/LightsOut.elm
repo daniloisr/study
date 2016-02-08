@@ -1,9 +1,8 @@
-import Color
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
+import Color
 import List
 import Mouse
-import Color
 import Window
 
 size = 50
@@ -12,29 +11,40 @@ num = 3
 
 main : Signal Element
 main =
-  Signal.map2 view (Signal.sampleOn Mouse.clicks Mouse.position) Window.dimensions
+  Signal.map2 view Window.dimensions gameState
 
-type State = ON | OFF
+gameState : Signal Game
+gameState =
+  Signal.foldp update newGame (Signal.sampleOn Mouse.clicks Mouse.position)
 
-model : List State
-model =
-  List.map (always OFF) [1..(num * num)]
-
-view : (Int, Int) -> (Int, Int) -> Element
-view (x, y) (w, h) =
+update : (Int, Int) -> Game -> Game
+update (x, y) game =
   let
-    x' = x - w//2 + (size // 2)
-    y' = y - h//2 - (size // 2)
+    x = 1
+    -- x' = x - w//2 + (size // 2)
+    -- y' = y - h//2 - (size // 2)
   in
-    collage w h
-      (List.append
-        (List.indexedMap (drawSquare (x', -y')) model)
-        [toForm <| show (x', -y')])
+    -- collage w h
+    --   (List.append
+    --     (List.indexedMap (drawSquare (x', -y')) game.ligths)
+    --     [toForm <| show (x', -y')])
+    game
 
-drawSquare : (Int, Int) -> Int -> State -> Form
-drawSquare (mx, my) index state =
+type alias Game =
+  { lights : List Bool }
+
+newGame : Game
+newGame =
+  { lights = List.map (always False) [1..(num * num)] }
+
+view : (Int, Int) -> Game -> Element
+view (w, h) game =
+  collage w h (List.indexedMap drawSquare game.lights)
+
+drawSquare : Int -> Bool -> Form
+drawSquare index state =
   let
-    color = if (clicked (mx, my) index) then Color.red else Color.blue
+    color = if False then Color.red else Color.blue
     x = (index % num) * size
     y = (index // num) * size
   in
@@ -50,4 +60,4 @@ clicked (mx, my) index =
     b2 = mx' - padding > 0 && my' - padding > 0
     b3 = mx' + padding < size && my' + padding < size
   in
-    b1 && b2 && b3
+    mx > 0 && my > 0 && b1 && b2 && b3
