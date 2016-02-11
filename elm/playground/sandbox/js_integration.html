@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+
+    <script type="text/javascript" src="elm.js"></script>
+    <script type="text/javascript">
+      var elm = Elm.fullscreen(Elm.Integration, { documentLoaded: [] });
+
+      window.onload = function() {
+        elm.ports.documentLoaded.send(['foo', 'bar']);
+      };
+
+      // elm.ports.print.subscribe(function(messages) {
+      //   console.log(messages);
+      // });
+    </script>
+  </body>
+</html>

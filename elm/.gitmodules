@@ -1,0 +1,6 @@
+[submodule "refs/chrome-fast-tab-switcher"]
+	path = refs/chrome-fast-tab-switcher
+	url = git@github.com:BinaryMuse/chrome-fast-tab-switcher.git
+[submodule "refs/elm-todomvc"]
+	path = refs/elm-todomvc
+	url = git@github.com:evancz/elm-todomvc.git

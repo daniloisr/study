@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+
+  "name": "Tabs!",
+  "description": "",
+  "version": "0.0.0",
+  "permissions": ["tabs"],
+  "commands": {
+    "show-tabs-list": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space"
+      },
+      "description": "Show Tab List"
+    }
+  },
+  "background": {
+    "persistent": false,
+    "scripts": ["background.js"]
+  }
+}
