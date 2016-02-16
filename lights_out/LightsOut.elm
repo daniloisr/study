@@ -2,7 +2,7 @@
 -- http://programmers.stackexchange.com/a/131705/50321
 import Graphics.Collage exposing (Form, collage, square, filled, move, toForm)
 import Graphics.Element exposing (Element, show)
-import Color exposing (red, rgba)
+import Color exposing (rgb)
 import List exposing (map, map2, repeat, concat, (::))
 import Signal
 import Mouse
@@ -24,7 +24,7 @@ p x y =
   , y = y
   , hover = False
   , clicked = False
-  , highlight = 0.3
+  , highlight = 0
   }
 
 type alias Model =
@@ -41,7 +41,11 @@ initialModel =
 paintSquare : Point -> Form
 paintSquare point =
   square 50 |>
-    filled (if point.clicked then red else (rgba 0 0 0 point.highlight)) |>
+    filled
+      (if point.clicked then
+        (rgb 255 (round (50 * point.highlight)) (round (50 * point.highlight)))
+      else
+        (rgb (round (180 * (1 - point.highlight))) (round (180 * (1 - point.highlight))) (round (180 * (1 - point.highlight))))) |>
     move (toFloat point.x * 52, toFloat point.y * 52)
 
 main : Signal Element
@@ -69,25 +73,21 @@ input =
 update : Input -> Model -> Model
 update input model =
   case input of
-    MouseMove (x', y') ->
+    MouseMove pos ->
       let
-        (x, y) = (x' - 225, 275 - y')
-        px = x // 50
-        py = y // 50
+        (x, y) = correctMousePosition pos
         points =
           map
-          (\p -> { p | hover = p.x == px && p.y == py })
+          (\p -> { p | hover = p.x == x && p.y == y })
           model.points
       in
         { model | points = points }
-    MouseClick (x', y') ->
+    MouseClick pos ->
       let
-        (x, y) = (x' - 225, 275 - y')
-        px = x // 50
-        py = y // 50
+        (x, y) = correctMousePosition pos
         points =
           map
-          (\p -> if p.x == px && p.y == py then { p | clicked = not p.clicked } else p)
+          (\p -> if p.x == x && p.y == y then { p | clicked = not p.clicked } else p)
           model.points
       in
         { model | points = points }
@@ -95,6 +95,10 @@ update input model =
       { model |
         points =
           map
-          (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.2) 0.3 })
+          (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.2) 0 })
           model.points
       }
+
+correctMousePosition : (Int, Int) -> (Int, Int)
+correctMousePosition (x, y) =
+  ((x - 225) // 50, (275 - y) // 50)
