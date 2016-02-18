@@ -46,15 +46,17 @@ type alias Model =
   , window: (Int, Int)
   }
 
-initialModel : Model
-initialModel =
+initialModel : Input -> Model
+initialModel input =
   let
     range = [0..(gridSize - 1)]
     xs = concat <| map (repeat gridSize) range
     ys = concat <| repeat gridSize range
+    win' = case input of
+      Resize win -> win
+      _ -> (0, 0)
   in
-    { points = map2 p xs ys
-    , window = (0, 0) }
+    { points = map2 p xs ys, window = win' }
 
 boardSize : Model -> Float
 boardSize model =
@@ -132,7 +134,7 @@ update input model =
           model.points
       }
 
-    Reset -> initialModel
+    Reset -> initialModel input
 
     NoOp -> model
 
@@ -155,4 +157,21 @@ mouseToIndex mouse model =
 -- Main
 main : Signal Element
 main =
-  Signal.map view <| Signal.foldp update initialModel input
+  Signal.map view <| foldp' update initialModel input
+
+
+-- Foldp that don't drop the first signal
+-- ref: https://github.com/Apanatshka/elm-signal-extra/blob/fb8d75a/src/Signal/Extra.elm#L169
+-- see: foldp problem: https://groups.google.com/d/topic/elm-discuss/rsCgT_eR9UU/discussion
+foldp' : (a -> b -> b) -> (a -> b) -> Signal a -> Signal b
+foldp' fun initFun input =
+  let
+    initial = Signal.map initFun <| (Signal.sampleOn (Signal.constant ()) input)
+    rest = Signal.foldp fun' Nothing (Signal.map2 (,) input initial)
+    fun' (inp, ini) mb = Maybe.withDefault ini mb |> fun inp |> Just
+    unsafe maybe =
+      case maybe of
+       Just value -> value
+       Nothing -> Debug.crash "Should never be here"
+  in
+    Signal.map unsafe <| Signal.merge (Signal.map Just initial) rest
