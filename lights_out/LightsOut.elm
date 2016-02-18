@@ -1,9 +1,9 @@
 -- for index query
 -- http://programmers.stackexchange.com/a/131705/50321
-import Graphics.Collage exposing (Form, collage, rect, filled, move, toForm)
-import Graphics.Element exposing (Element, show, below, container, middle)
+import Graphics.Collage exposing (Form, collage, square, filled, move, toForm)
+import Graphics.Element exposing (Element, show, below, container, middle, color)
 import Graphics.Input exposing (button)
-import Color exposing (rgb, grayscale)
+import Color exposing (rgb, grayscale, black)
 import List exposing (map, map2, repeat, concat, (::), member)
 import Signal
 import Mouse
@@ -12,11 +12,14 @@ import Window
 
 gridSize = 5
 padding = 2
+resetBtnMargin = 60
 
-tupOp : (a -> b -> Int) -> (a, a) -> (b, b) -> (Int, Int)
-tupOp op (x, y) (i, j) = (op x i, op y j)
-
-type Input = MouseMove (Int, Int) | TimeDelta Float | MouseClick (Int, Int) | Reset | NoOp
+type Input = Move (Int, Int)
+           | Click (Int, Int)
+           | Resize (Int, Int)
+           | Tick
+           | Reset
+           | NoOp
 
 resetButton : Signal.Mailbox Input
 resetButton = Signal.mailbox NoOp
@@ -39,7 +42,9 @@ p x y =
   }
 
 type alias Model =
-  { points: List Point }
+  { points: List Point
+  , window: (Int, Int)
+  }
 
 initialModel : Model
 initialModel =
@@ -48,64 +53,67 @@ initialModel =
     xs = concat <| map (repeat gridSize) range
     ys = concat <| repeat gridSize range
   in
-    { points = map2 p xs ys }
+    { points = map2 p xs ys
+    , window = (0, 0) }
 
-paintSquare : (Int, Int) -> Point -> Form
-paintSquare (boardW, boardH) point =
+boardSize : Model -> Float
+boardSize model =
   let
-    (r, g, b) = (255, round (30 * point.highlight), round (30 * point.highlight))
-    (rectW, rectH) = (boardW//gridSize - padding*2, boardH//gridSize - padding*2)
-    (mx, my) =
-      (point.x, point.y)
-        |> tupOp (*) (rectW, rectH)
-        |> tupOp (-) (boardW//2, boardH//2)
-        |> tupOp (-) (rectW//2, rectH//2)
-        |> tupOp (+) (padding, padding)
+    (w, h) = model.window
   in
-    rect (toFloat rectW - padding) (toFloat rectH - padding)
-      |> filled (if point.clicked then rgb r g b else grayscale (point.highlight * (-0.05) + 0.6))
-      |> move (toFloat mx, toFloat my)
+    min w h |> toFloat |> (*) 0.6
 
-main : Signal Element
-main =
-  Signal.map2
-    view
-    Window.dimensions
-    currentModel
 
-view : (Int, Int) -> Model -> Element
-view (w, h) model =
+-- View
+view : Model -> Element
+view model =
   let
-    (boardW, boardH) = (round ((toFloat w)*0.8 - padding*2), round ((toFloat h)*0.8 - padding*2))
+    (w, h) = model.window
+    bsize = boardSize model
     btn = (button (Signal.message resetButton.address Reset) "reset")
   in
-    map (paintSquare (boardW, boardH)) model.points
-      |> collage boardW (boardH - 60)
-      |> container w (h - 60) middle
-      |> below (container w 60 middle btn)
+    map (paintSquare bsize) model.points
+      |> (color (grayscale 0.8) << collage (round bsize) (round bsize))
+      |> container w (h - resetBtnMargin) middle
+      |> below (container w resetBtnMargin middle btn)
 
-currentModel : Signal Model
-currentModel =
-  Signal.foldp update initialModel input
 
+paintSquare : Float -> Point -> Form
+paintSquare bsize point =
+  let
+    (r, g, b) = (round (30 * point.highlight) + 50, round (30 * point.highlight) + 50, 200)
+    squareSize = bsize/gridSize
+    (mx, my) =
+      ((toFloat point.x) * squareSize - (bsize - squareSize)/2
+      ,(toFloat point.y) * squareSize - (bsize - squareSize)/2
+      )
+  in
+    square (squareSize - padding)
+      |> filled (if point.clicked then rgb r g b else grayscale (point.highlight * (-0.05) + 0.6))
+      |> move (mx, my)
+
+
+-- Update
 input : Signal Input
 input =
-  Signal.mergeMany [
-    (Signal.map MouseMove Mouse.position),
-    (Signal.map MouseClick (Signal.sampleOn Mouse.clicks Mouse.position)),
-    (Signal.map TimeDelta (Time.fps 30)),
-    resetButton.signal
-  ]
+  Signal.mergeMany
+    [ Signal.map Resize Window.dimensions
+    , Signal.map Move Mouse.position
+    , Signal.map Click (Signal.sampleOn Mouse.clicks Mouse.position)
+    , Signal.map (always Tick) (Time.fps 30)
+    , resetButton.signal
+    ]
+
 
 update : Input -> Model -> Model
 update input model =
   case input of
-    MouseMove pos ->
-      { model | points = map (\p -> { p | hover = (p.x, p.y) == (correctMousePosition pos) }) model.points }
+    Move pos ->
+      { model | points = map (\p -> { p | hover = (p.x, p.y) == (mouseToIndex pos model) }) model.points }
 
-    MouseClick pos ->
+    Click pos ->
       let
-        (x, y) = correctMousePosition pos
+        (x, y) = mouseToIndex pos model
         affected = map (\(cx, cy) -> (cx + x, cy + y)) [(0, 0), (-1, 0), (0, 1), (1, 0), (0, -1)]
         points =
           map
@@ -114,7 +122,9 @@ update input model =
       in
         { model | points = points }
 
-    TimeDelta dt ->
+    Resize window -> { model | window = window }
+
+    Tick ->
       { model |
         points =
           map
@@ -126,6 +136,23 @@ update input model =
 
     NoOp -> model
 
-correctMousePosition : (Int, Int) -> (Int, Int)
-correctMousePosition (x, y) =
-  ((x - 225) // 50, (275 - y) // 50)
+
+mouseToIndex : (Int, Int) -> Model -> (Int, Int)
+mouseToIndex mouse model =
+  let
+    (w, h) = model.window
+    bsize = boardSize model
+    squareSize = bsize/gridSize
+    (x, y) = (\(x, y) -> (toFloat x, toFloat y)) mouse
+    (ix, iy) =
+      ( x - (toFloat w - bsize + squareSize                 )/2
+      ,-y + (toFloat h + bsize - squareSize - resetBtnMargin)/2
+      )
+  in
+    (round <| ix/squareSize, round <| iy/squareSize)
+
+
+-- Main
+main : Signal Element
+main =
+  Signal.map view <| Signal.foldp update initialModel input
