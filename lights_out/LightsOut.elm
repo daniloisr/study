@@ -19,27 +19,28 @@ type Input = Move (Int, Int)
            | Resize (Int, Int)
            | Tick
            | Reset
-           | NoOp
 
 resetButton : Signal.Mailbox Input
-resetButton = Signal.mailbox NoOp
+resetButton = Signal.mailbox Reset
+
 
 type alias Point =
-  { x: Int
-  , y: Int
+  { i: Int
+  , j: Int
   , hover: Bool
   , clicked: Bool
   , highlight: Float
   }
 
 p : Int -> Int -> Point
-p x y =
-  { x = x
-  , y = y
+p i j =
+  { i = i
+  , j = j
   , hover = False
   , clicked = False
   , highlight = 0
   }
+
 
 type alias Model =
   { points: List Point
@@ -57,6 +58,7 @@ initialModel input =
       _ -> (0, 0)
   in
     { points = map2 p xs ys, window = win' }
+
 
 boardSize : Model -> Float
 boardSize model =
@@ -86,8 +88,8 @@ paintSquare bsize point =
     (r, g, b) = (round (30 * point.highlight) + 50, round (30 * point.highlight) + 50, 200)
     squareSize = bsize/gridSize
     (mx, my) =
-      ((toFloat point.x) * squareSize - (bsize - squareSize)/2
-      ,(toFloat point.y) * squareSize - (bsize - squareSize)/2
+      ((toFloat point.i) * squareSize - (bsize - squareSize)/2
+      ,(toFloat point.j) * squareSize - (bsize - squareSize)/2
       )
   in
     square (squareSize - padding)
@@ -96,47 +98,28 @@ paintSquare bsize point =
 
 
 -- Update
-input : Signal Input
-input =
-  Signal.mergeMany
-    [ Signal.map Resize Window.dimensions
-    , Signal.map Move Mouse.position
-    , Signal.map Click (Signal.sampleOn Mouse.clicks Mouse.position)
-    , Signal.map (always Tick) (Time.fps 30)
-    , resetButton.signal
-    ]
-
-
 update : Input -> Model -> Model
 update input model =
   case input of
-    Move pos ->
-      { model | points = map (\p -> { p | hover = (p.x, p.y) == (mouseToIndex pos model) }) model.points }
+    Move pos -> { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
 
     Click pos ->
       let
-        (x, y) = mouseToIndex pos model
-        affected = map (\(cx, cy) -> (cx + x, cy + y)) [(0, 0), (-1, 0), (0, 1), (1, 0), (0, -1)]
-        points =
-          map
-          (\p -> if member (p.x, p.y) affected then { p | clicked = not p.clicked } else p)
-          model.points
+        toggle = toToggle <| mouseToIndex pos model
+        points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) model.points
       in
         { model | points = points }
 
     Resize window -> { model | window = window }
 
-    Tick ->
-      { model |
-        points =
-          map
-          (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 })
-          model.points
-      }
+    Tick -> { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
 
-    Reset -> initialModel input
+    Reset -> initialModel <| Resize model.window
 
-    NoOp -> model
+
+toToggle : (Int, Int) -> List (Int, Int)
+toToggle (i, j) =
+  map (\(i2, j2) -> (i + i2, j + j2)) [(0, 0), (-1, 0), (0, 1), (1, 0), (0, -1)]
 
 
 mouseToIndex : (Int, Int) -> Model -> (Int, Int)
@@ -146,18 +129,30 @@ mouseToIndex mouse model =
     bsize = boardSize model
     squareSize = bsize/gridSize
     (x, y) = (\(x, y) -> (toFloat x, toFloat y)) mouse
-    (ix, iy) =
+    (i, j) =
       ( x - (toFloat w - bsize + squareSize                 )/2
       ,-y + (toFloat h + bsize - squareSize - resetBtnMargin)/2
       )
   in
-    (round <| ix/squareSize, round <| iy/squareSize)
+    (round <| i/squareSize, round <| j/squareSize)
 
 
 -- Main
 main : Signal Element
 main =
-  Signal.map view <| foldp' update initialModel input
+  Signal.map view <| foldp' update initialModel inputs
+
+inputs : Signal Input
+inputs =
+  Signal.mergeMany
+    [ Signal.map Resize Window.dimensions
+    , Signal.map Move Mouse.position
+    , Signal.map Click (Signal.sampleOn Mouse.clicks Mouse.position)
+    , Signal.map (always Tick) (Time.fps 30)
+    , resetButton.signal
+    ]
+
+
 
 
 -- Foldp that don't drop the first signal
