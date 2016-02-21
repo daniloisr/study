@@ -1,10 +1,11 @@
 -- for index query
 -- http://programmers.stackexchange.com/a/131705/50321
-import Graphics.Collage exposing (Form, collage, square, filled, move, toForm)
-import Graphics.Element exposing (Element, show, below, container, middle, color)
+import Graphics.Collage exposing (..)
+import Graphics.Element exposing (..)
 import Graphics.Input exposing (button)
-import Color exposing (rgb, grayscale, black)
-import List exposing (map, map2, repeat, concat, (::), member)
+import Text
+import Color exposing (rgb, grayscale, black, white)
+import List exposing (map, map2, repeat, concat, (::), member, all)
 import Signal
 import Mouse
 import Time exposing (Time)
@@ -13,7 +14,6 @@ import Random
 
 gridSize = 5
 padding = 2
-resetBtnMargin = 60
 
 type Input = Move (Int, Int)
            | Click (Int, Int)
@@ -28,20 +28,20 @@ resetButton = Signal.mailbox Reset
 type alias Point =
   { i: Int
   , j: Int
-  , hover: Bool
+  , hover: Float
+  , highlight: Float
   , clicked: Bool
   , toggled: Bool
-  , highlight: Float
   }
 
-p : Int -> Int -> Point
-p i j =
+point : Int -> Int -> Point
+point i j =
   { i = i
   , j = j
-  , hover = False
+  , hover = 0
+  , highlight = 0
   , clicked = False
   , toggled = False
-  , highlight = 0
   }
 
 type alias RndSetup =
@@ -52,7 +52,7 @@ type alias RndSetup =
 
 initRndSetup : RndSetup
 initRndSetup =
-  { clicks = round <| gridSize * gridSize * 0.5
+  { clicks = round <| gridSize * gridSize * 0.3
   , seed = Random.initialSeed -1
   , rndInt = -1
   }
@@ -62,6 +62,7 @@ type alias Model =
   , window: (Int, Int)
   , randomizing: Bool
   , rndSetup: RndSetup
+  , ended: Bool
   }
 
 initialModel : Input -> Model
@@ -74,10 +75,11 @@ initialModel input =
       Resize win -> win
       _ -> (0, 0)
   in
-    { points = map2 p xs ys
+    { points = map2 point xs ys
     , window = win'
     , randomizing = True
     , rndSetup = initRndSetup
+    , ended = False
     }
 
 
@@ -85,20 +87,30 @@ boardSize : Model -> Float
 boardSize model =
   (uncurry min) model.window |> toFloat |> (*) 0.6
 
+resetBtnMargin : Int -> Int
+resetBtnMargin h = round <| toFloat h * 0.2
 
 -- View
 view : Model -> Element
 view model =
   let
     (w, h) = model.window
+    rmargin = resetBtnMargin h
     bsize = boardSize model
     btn = (button (Signal.message resetButton.address Reset) "reset")
+    board = if model.ended then [txt "Won!"] else map (paintSquare bsize) model.points
   in
-    map (paintSquare bsize) model.points
+    board
       |> (color (grayscale 0.8) << collage (round bsize) (round bsize))
-      |> container w (h - resetBtnMargin) middle
-      |> below (container w resetBtnMargin middle btn)
+      |> container w (h - rmargin) middle
+      |> below (container w rmargin midTop btn)
 
+txt string =
+  Text.fromString string
+    |> Text.color white
+    |> Text.monospace
+    |> leftAligned
+    |> toForm
 
 paintSquare : Float -> Point -> Form
 paintSquare bsize point =
@@ -118,32 +130,51 @@ paintSquare bsize point =
 -- Update
 update : Input -> Model -> Model
 update input model =
-  case input of
+  randomize input
+    <| play input
+    <| updateState input model
+
+randomize input model =
+  if not model.randomizing then model
+  else case input of
+    Tick time -> randomClick time model
+    _ -> model
+
+play input model =
+  if model.randomizing || model.ended then model
+  else case input of
     Move pos ->
-      if model.randomizing then
-        model
-      else
-        { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
+      { model
+      | points = map
+        (\p -> { p | hover = if (p.i, p.j) == (mouseToIndex pos model) then 1 else 0 })
+        model.points
+      }
 
     Click pos ->
-      if model.randomizing then
-        model
-      else
-        let
-          toggle = toToggle <| mouseToIndex pos model
-          points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) model.points
-        in
-          { model | points = points }
+      let
+        toggle = toToggle <| mouseToIndex pos model
+        points = map
+          (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p)
+          model.points
+        ended = all (not << .clicked) points
+      in
+        { model | points = points, ended = ended }
 
+    _ -> model
+
+
+updateState input model =
+  case input of
     Resize window -> { model | window = window }
-
-    Tick time ->
-      if model.randomizing then
-        randomClick time model
-      else
-        { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
-
     Reset -> initialModel <| Resize model.window
+    Tick time ->
+      { model
+      | points = map
+        (\p -> { p | highlight = max p.hover <| p.highlight - 0.08 })
+        model.points
+      }
+    _ -> model
+
 
 
 toToggle : (Int, Int) -> List (Int, Int)
@@ -155,12 +186,13 @@ mouseToIndex : (Int, Int) -> Model -> (Int, Int)
 mouseToIndex mouse model =
   let
     (w, h) = model.window
+    rmargin = resetBtnMargin h |> toFloat
     bsize = boardSize model
     squareSize = bsize/gridSize
     (x, y) = (\(x, y) -> (toFloat x, toFloat y)) mouse
     (i, j) =
-      ( x - (toFloat w - bsize + squareSize                 )/2
-      ,-y + (toFloat h + bsize - squareSize - resetBtnMargin)/2
+      ( x - (toFloat w - bsize + squareSize          )/2
+      ,-y + (toFloat h + bsize - squareSize - rmargin)/2
       )
   in
     (round <| i/squareSize, round <| j/squareSize)
