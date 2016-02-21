@@ -7,8 +7,9 @@ import Color exposing (rgb, grayscale, black)
 import List exposing (map, map2, repeat, concat, (::), member)
 import Signal
 import Mouse
-import Time
+import Time exposing (Time)
 import Window
+import Random
 
 gridSize = 5
 padding = 2
@@ -17,7 +18,7 @@ resetBtnMargin = 60
 type Input = Move (Int, Int)
            | Click (Int, Int)
            | Resize (Int, Int)
-           | Tick
+           | Tick Time
            | Reset
 
 resetButton : Signal.Mailbox Input
@@ -45,6 +46,9 @@ p i j =
 type alias Model =
   { points: List Point
   , window: (Int, Int)
+  , random: Int
+  , seed: Random.Seed
+  , i: Int
   }
 
 initialModel : Input -> Model
@@ -57,7 +61,12 @@ initialModel input =
       Resize win -> win
       _ -> (0, 0)
   in
-    { points = map2 p xs ys, window = win' }
+    { points = map2 p xs ys
+    , window = win'
+    , random = gridSize * gridSize * 0.5 |> round
+    , seed = Random.initialSeed -1
+    , i = -1
+    }
 
 
 boardSize : Model -> Float
@@ -101,18 +110,29 @@ paintSquare bsize point =
 update : Input -> Model -> Model
 update input model =
   case input of
-    Move pos -> { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
+    Move pos ->
+      if model.random == 0 then
+        { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
+      else
+        model
 
     Click pos ->
       let
         toggle = toToggle <| mouseToIndex pos model
         points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) model.points
       in
-        { model | points = points }
+        if model.random == 0 then
+          { model | points = points }
+        else
+          model
 
     Resize window -> { model | window = window }
 
-    Tick -> { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
+    Tick time ->
+      if model.random == 0 then
+        { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
+      else
+        randomClick time model
 
     Reset -> initialModel <| Resize model.window
 
@@ -136,6 +156,17 @@ mouseToIndex mouse model =
   in
     (round <| i/squareSize, round <| j/squareSize)
 
+randomClick : Time -> Model -> Model
+randomClick t m =
+  let
+    (rnd, s) =
+      Random.generate (Random.int 0 (gridSize * gridSize))
+      <| if m.i == -1 then (Random.initialSeed <| round t) else m.seed
+    toggle = toToggle (rnd//gridSize, rnd%gridSize)
+    points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) m.points
+  in
+    { m | points = points, seed = s, i = rnd, random = m.random - 1 }
+
 
 -- Main
 main : Signal Element
@@ -148,7 +179,7 @@ inputs =
     [ Signal.map Resize Window.dimensions
     , Signal.map Move Mouse.position
     , Signal.map Click (Signal.sampleOn Mouse.clicks Mouse.position)
-    , Signal.map (always Tick) (Time.fps 30)
+    , Signal.map (\a -> Tick <| fst a) (Time.fps 30 |> Time.timestamp)
     , resetButton.signal
     ]
 
