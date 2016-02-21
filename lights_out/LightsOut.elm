@@ -30,6 +30,7 @@ type alias Point =
   , j: Int
   , hover: Bool
   , clicked: Bool
+  , toggled: Bool
   , highlight: Float
   }
 
@@ -39,16 +40,28 @@ p i j =
   , j = j
   , hover = False
   , clicked = False
+  , toggled = False
   , highlight = 0
   }
 
+type alias RndSetup =
+  { clicks: Int
+  , seed: Random.Seed
+  , rndInt: Int
+  }
+
+initRndSetup : RndSetup
+initRndSetup =
+  { clicks = round <| gridSize * gridSize * 0.5
+  , seed = Random.initialSeed -1
+  , rndInt = -1
+  }
 
 type alias Model =
   { points: List Point
   , window: (Int, Int)
-  , random: Int
-  , seed: Random.Seed
-  , i: Int
+  , randomizing: Bool
+  , rndSetup: RndSetup
   }
 
 initialModel : Input -> Model
@@ -63,18 +76,14 @@ initialModel input =
   in
     { points = map2 p xs ys
     , window = win'
-    , random = gridSize * gridSize * 0.5 |> round
-    , seed = Random.initialSeed -1
-    , i = -1
+    , randomizing = True
+    , rndSetup = initRndSetup
     }
 
 
 boardSize : Model -> Float
 boardSize model =
-  let
-    (w, h) = model.window
-  in
-    min w h |> toFloat |> (*) 0.6
+  (uncurry min) model.window |> toFloat |> (*) 0.6
 
 
 -- View
@@ -111,28 +120,28 @@ update : Input -> Model -> Model
 update input model =
   case input of
     Move pos ->
-      if model.random == 0 then
-        { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
-      else
+      if model.randomizing then
         model
+      else
+        { model | points = map (\p -> { p | hover = (p.i, p.j) == (mouseToIndex pos model) }) model.points }
 
     Click pos ->
-      let
-        toggle = toToggle <| mouseToIndex pos model
-        points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) model.points
-      in
-        if model.random == 0 then
+      if model.randomizing then
+        model
+      else
+        let
+          toggle = toToggle <| mouseToIndex pos model
+          points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) model.points
+        in
           { model | points = points }
-        else
-          model
 
     Resize window -> { model | window = window }
 
     Tick time ->
-      if model.random == 0 then
-        { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
-      else
+      if model.randomizing then
         randomClick time model
+      else
+        { model | points = map (\p -> { p | highlight = if p.hover then 1 else max (p.highlight - 0.08) 0 }) model.points }
 
     Reset -> initialModel <| Resize model.window
 
@@ -161,11 +170,12 @@ randomClick t m =
   let
     (rnd, s) =
       Random.generate (Random.int 0 (gridSize * gridSize))
-      <| if m.i == -1 then (Random.initialSeed <| round t) else m.seed
+      <| if m.rndSetup.rndInt == -1 then (Random.initialSeed <| round t) else m.rndSetup.seed
     toggle = toToggle (rnd//gridSize, rnd%gridSize)
     points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) m.points
+    rndSetup = { seed = s, rndInt = rnd, clicks = m.rndSetup.clicks - 1 }
   in
-    { m | points = points, seed = s, i = rnd, random = m.random - 1 }
+    { m | points = points, rndSetup = rndSetup, randomizing = rndSetup.clicks > 0 }
 
 
 -- Main
@@ -179,7 +189,7 @@ inputs =
     [ Signal.map Resize Window.dimensions
     , Signal.map Move Mouse.position
     , Signal.map Click (Signal.sampleOn Mouse.clicks Mouse.position)
-    , Signal.map (\a -> Tick <| fst a) (Time.fps 30 |> Time.timestamp)
+    , Signal.map (Tick << fst) (Time.fps 30 |> Time.timestamp)
     , resetButton.signal
     ]
 
