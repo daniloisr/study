@@ -12,7 +12,7 @@ import Time exposing (Time)
 import Window
 import Random
 
-gridSize = 5
+initialGridSize = 5
 padding = 2
 
 type Input = Move (Int, Int)
@@ -34,8 +34,8 @@ type alias Point =
   , toggled: Bool
   }
 
-point : Int -> Int -> Point
-point i j =
+buildPoint : Int -> Int -> Point
+buildPoint i j =
   { i = i
   , j = j
   , hover = 0
@@ -50,9 +50,9 @@ type alias RndSetup =
   , rndInt: Int
   }
 
-initRndSetup : RndSetup
-initRndSetup =
-  { clicks = round <| gridSize * gridSize * 0.4
+initRndSetup : Int -> RndSetup
+initRndSetup s =
+  { clicks = round <| toFloat s * toFloat s * 0.4
   , seed = Random.initialSeed -1
   , rndInt = -1
   }
@@ -64,25 +64,28 @@ type alias Model =
   , randomizing: Bool
   , rndSetup: RndSetup
   , ended: Bool
+  , gridSize: Int
   }
 
 initialModel : Input -> Model
 initialModel input =
   let
-    range = [0..(gridSize - 1)]
-    xs = concat <| map (repeat gridSize) range
-    ys = concat <| repeat gridSize range
     win' = case input of
       Resize win -> win
       _ -> (0, 0)
   in
-    { points = map2 point xs ys
+    { points = buildGrid initialGridSize
     , clicks = 0
     , window = win'
     , randomizing = True
-    , rndSetup = initRndSetup
+    , rndSetup = initRndSetup initialGridSize
     , ended = False
+    , gridSize = initialGridSize
     }
+
+buildGrid : Int -> List Point
+buildGrid s =
+  map (uncurry buildPoint << (\a -> (a//s, a%s)))  [0..((s * s) - 1)]
 
 
 boardSize : Model -> Float
@@ -106,7 +109,7 @@ view model =
          <| "Won with " ++ (toString model.clicks) ++ " clicks!"
         ]
       else
-        map (paintSquare bsize) model.points
+        map (paintSquare bsize model.gridSize) model.points
   in
     board
       |> (color (grayscale 0.8) << collage (round bsize) (round bsize))
@@ -120,11 +123,11 @@ txt c string =
     |> Text.monospace
     |> leftAligned
 
-paintSquare : Float -> Point -> Form
-paintSquare bsize point =
+paintSquare : Float -> Int -> Point -> Form
+paintSquare bsize gridSize point =
   let
     (r, g, b) = (round (30 * point.highlight) + 50, round (30 * point.highlight) + 50, 200)
-    squareSize = bsize/gridSize
+    squareSize = bsize/toFloat gridSize
     (mx, my) =
       ((toFloat point.i) * squareSize - (bsize - squareSize)/2
       ,(toFloat point.j) * squareSize - (bsize - squareSize)/2
@@ -196,7 +199,7 @@ mouseToIndex mouse model =
     (w, h) = model.window
     rmargin = resetBtnMargin h |> toFloat
     bsize = boardSize model
-    squareSize = bsize/gridSize
+    squareSize = bsize/toFloat model.gridSize
     (x, y) = (\(x, y) -> (toFloat x, toFloat y)) mouse
     (i, j) =
       ( x - (toFloat w - bsize + squareSize          )/2
@@ -209,9 +212,9 @@ randomClick : Time -> Model -> Model
 randomClick t m =
   let
     (rnd, s) =
-      Random.generate (Random.int 0 (gridSize * gridSize))
+      Random.generate (Random.int 0 (m.gridSize * m.gridSize))
       <| if m.rndSetup.rndInt == -1 then (Random.initialSeed <| round t) else m.rndSetup.seed
-    toggle = toToggle (rnd//gridSize, rnd%gridSize)
+    toggle = toToggle (rnd//m.gridSize, rnd%m.gridSize)
     points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) m.points
     rndSetup = { seed = s, rndInt = rnd, clicks = m.rndSetup.clicks - 1 }
   in
