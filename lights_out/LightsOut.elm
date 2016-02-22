@@ -52,13 +52,14 @@ type alias RndSetup =
 
 initRndSetup : RndSetup
 initRndSetup =
-  { clicks = round <| gridSize * gridSize * 0.3
+  { clicks = round <| gridSize * gridSize * 0.4
   , seed = Random.initialSeed -1
   , rndInt = -1
   }
 
 type alias Model =
   { points: List Point
+  , clicks: Int
   , window: (Int, Int)
   , randomizing: Bool
   , rndSetup: RndSetup
@@ -76,6 +77,7 @@ initialModel input =
       _ -> (0, 0)
   in
     { points = map2 point xs ys
+    , clicks = 0
     , window = win'
     , randomizing = True
     , rndSetup = initRndSetup
@@ -98,19 +100,25 @@ view model =
     rmargin = resetBtnMargin h
     bsize = boardSize model
     btn = (button (Signal.message resetButton.address Reset) "reset")
-    board = if model.ended then [txt "Won!"] else map (paintSquare bsize) model.points
+    clicks = txt black <| (toString model.clicks) ++ " clicks"
+    board = if model.ended then
+        [ toForm << txt white
+         <| "Won with " ++ (toString model.clicks) ++ " clicks!"
+        ]
+      else
+        map (paintSquare bsize) model.points
   in
     board
       |> (color (grayscale 0.8) << collage (round bsize) (round bsize))
       |> container w (h - rmargin) middle
-      |> below (container w rmargin midTop btn)
+      |> below (container w (rmargin//2) midTop clicks)
+      |> below (container w (rmargin//2) midTop btn)
 
-txt string =
+txt c string =
   Text.fromString string
-    |> Text.color white
+    |> Text.color c
     |> Text.monospace
     |> leftAligned
-    |> toForm
 
 paintSquare : Float -> Point -> Form
 paintSquare bsize point =
@@ -158,7 +166,7 @@ play input model =
           model.points
         ended = all (not << .clicked) points
       in
-        { model | points = points, ended = ended }
+        { model | points = points, ended = ended, clicks = model.clicks + 1 }
 
     _ -> model
 
