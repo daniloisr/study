@@ -1,12 +1,16 @@
--- for index query
--- http://programmers.stackexchange.com/a/131705/50321
+-- Disclaimer
+-- Code written in a single file to run it easy at
+-- elm-lang.org/try
+--
+-- Next stuff to study
+-- spartial index: http://programmers.stackexchange.com/a/131705/50321
+
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Graphics.Input exposing (button)
 import Text
 import Color exposing (rgb, grayscale, black, white)
 import List exposing (map, map2, repeat, concat, (::), member, all)
-import Signal
 import Mouse
 import Time exposing (Time)
 import Window
@@ -126,7 +130,7 @@ txt c string =
   Text.fromString string
     |> Text.color c
     |> Text.monospace
-    |> leftAligned
+    |> centered
 
 paintSquare : Float -> Int -> Point -> Form
 paintSquare bsize level point =
@@ -176,14 +180,18 @@ play input model =
       }
 
     Click pos ->
-      let
-        toggle = toToggle model <| mouseToIndex pos model
-        points = map
-          (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p)
-          model.points
-        ended = all (not << .clicked) points
-      in
-        { model | points = points, ended = ended, clicks = model.clicks + 1 }
+      case toToggle model (mouseToIndex pos model) of
+        Just toggle ->
+          let
+            points = map (togglePoint toggle) model.points
+          in
+            { model
+            | points = points
+            , ended = all (not << .clicked) points
+            , clicks = model.clicks + 1
+            }
+
+        Nothing -> model
 
     _ -> model
 
@@ -201,14 +209,26 @@ updateState input model =
     _ -> model
 
 
-
-toToggle : Model -> (Int, Int) -> List (Int, Int)
-toToggle m (i, j) =
-  if m.level == 6 then
-    map (\(i2, j2) -> (i + i2, j + j2)) [(0, 0), (-1, -1), (-1, 1), (1, 1), (1, -1)]
-
+togglePoint : List (Int, Int) -> Point -> Point
+togglePoint togglePoints p =
+  if member (p.i, p.j) togglePoints then
+    { p | clicked = not p.clicked }
   else
-    map (\(i2, j2) -> (i + i2, j + j2)) [(0, 0), (-1, 0), (0, 1), (1, 0), (0, -1)]
+    p
+
+toToggle : Model -> (Int, Int) -> Maybe (List ( Int, Int ))
+toToggle m (i, j) =
+  let
+    sumTup (k, l) = (i + k, j + l)
+  in
+    if min i j < 0 || max i j >= m.level then
+      Nothing
+
+    else if m.level == 6 then
+      Just <| map sumTup [(0, 0), (-1, -1), (-1, 1), (1, 1), (1, -1)]
+
+    else
+      Just <| map sumTup [(0, 0), (-1, 0), (0, 1), (1, 0), (0, -1)]
 
 
 mouseToIndex : (Int, Int) -> Model -> (Int, Int)
@@ -232,11 +252,19 @@ randomClick t m =
     (rnd, s) =
       Random.generate (Random.int 0 (m.level * m.level))
       <| if m.rndSetup.rndInt == -1 then (Random.initialSeed <| round t) else m.rndSetup.seed
+
     toggle = toToggle m (rnd//m.level, rnd%m.level)
-    points = map (\p -> if member (p.i, p.j) toggle then { p | clicked = not p.clicked } else p) m.points
-    rndSetup = { seed = s, rndInt = rnd, clicks = m.rndSetup.clicks - 1 }
+
   in
-    { m | points = points, rndSetup = rndSetup, randomizing = rndSetup.clicks > 0 }
+    case toggle of
+      Just toggle ->
+        { m
+        | points = map (togglePoint toggle) m.points
+        , rndSetup = { seed = s, rndInt = rnd, clicks = m.rndSetup.clicks - 1 }
+        , randomizing = m.rndSetup.clicks - 1 > 0
+        }
+
+      Nothing -> m
 
 
 -- Main
