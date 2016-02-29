@@ -1,9 +1,11 @@
--- Disclaimer
 -- Code written in a single file to run it easy at
 -- elm-lang.org/try
+-- \o/
 --
 -- Next stuff to study
--- spartial index: http://programmers.stackexchange.com/a/131705/50321
+-- spartial index: https://en.wikipedia.org/wiki/Spatial_database#Spatial_Index
+
+module LightsOut where
 
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
@@ -107,11 +109,10 @@ view model =
     rmargin = resetBtnMargin h
     bsize = boardSize model
     btn = (button (Signal.message resetButton.address Reset) "reset")
-    clicks = txt black <| (toString model.clicks) ++ " clicks"
     board = if model.ended then
         if model.level < 6 then
           [ toForm << txt white
-           <| "Won with " ++ (toString model.clicks) ++ " clicks!"
+           <| "Won with " ++ (toString model.clicks) ++ " clicks!\nClick to next Level"
           ]
         else
           [ toForm << txt white
@@ -123,8 +124,16 @@ view model =
     board
       |> (color (grayscale 0.8) << collage (round bsize) (round bsize))
       |> container w (h - rmargin) middle
-      |> below (container w (rmargin//2) midTop clicks)
-      |> below (container w (rmargin//2) midTop btn)
+      |> below (container w (rmargin//2) midTop (clickStatus model))
+      |> below (container w (rmargin//2) middle btn)
+
+clickStatus : Model -> Element
+clickStatus m =
+  let
+    level = "Level " ++ (toString (m.level - initialLevel + 1))
+    clicks = (toString m.clicks) ++ " clicks"
+  in
+    txt black (level ++ "  -  " ++ clicks)
 
 txt c string =
   Text.fromString string
@@ -164,11 +173,7 @@ play input model =
   if model.randomizing then model
 
   else if model.ended then case input of
-    Click pos ->
-      if model.level < 6 then
-        initialModel (min 6 <| model.level + 1) <| Resize model.window
-      else
-        model
+    Click pos -> initialModel (min 6 <| model.level + 1) <| Resize model.window
     _ -> model
 
   else case input of
@@ -199,7 +204,7 @@ play input model =
 updateState input model =
   case input of
     Resize window -> { model | window = window }
-    Reset -> initialModel (if model.level < 6 then model.level else initialLevel) <| Resize model.window
+    Reset -> initialModel model.level <| Resize model.window
     Tick time ->
       { model
       | points = map
@@ -250,7 +255,7 @@ randomClick : Time -> Model -> Model
 randomClick t m =
   let
     (rnd, s) =
-      Random.generate (Random.int 0 (m.level * m.level))
+      Random.generate (Random.int 0 (m.level * m.level - 1))
       <| if m.rndSetup.rndInt == -1 then (Random.initialSeed <| round t) else m.rndSetup.seed
 
     toggle = toToggle m (rnd//m.level, rnd%m.level)
@@ -264,7 +269,7 @@ randomClick t m =
         , randomizing = m.rndSetup.clicks - 1 > 0
         }
 
-      Nothing -> m
+      Nothing -> { m | rndSetup = { seed = s, rndInt = rnd, clicks = m.rndSetup.clicks } }
 
 
 -- Main
