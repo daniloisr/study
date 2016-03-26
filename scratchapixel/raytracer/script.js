@@ -8,7 +8,7 @@ function Vec3(x, y, z) {
 }
 
 Vec3.prototype.length2 = function length2() {
-  return this.x * this.x + this.y + this.y + this.z * this.z;
+  return this.x * this.x + this.y * this.y + this.z * this.z;
 }
 
 
@@ -60,6 +60,9 @@ Vec3.prototype.mult = function mult() {
   }
 }
 
+Vec3.prototype.toString = function () {
+  return "" + this.x + ", " + this.y + ", ", + this.z;
+}
 
 
 function Sphere(center, radius, surfaceColor, reflection, transparency, emissionColor) {
@@ -109,7 +112,10 @@ function trace(rayorig, raydir, spheres, depth) {
     var t0 = INFINITY, t1 = INFINITY;
     var intersection = spheres[i].intersect(rayorig, raydir);
     if(intersection[0]) {
-      t0 = intersection[1], t1 = intersection[2];
+      if (intersection.length > 1)
+        t0 = intersection[1], t1 = intersection[2];
+
+			if(t0 < 0) t0 = t1;
       if(t0 < tnear) {
         tnear = t0;
         sphere = spheres[i];
@@ -118,7 +124,7 @@ function trace(rayorig, raydir, spheres, depth) {
   }
 
   // if there's no intersection return black or background color
-  if (sphere == false) return new Vec3(1, 1, 1);
+  if (sphere == false) return new Vec3(2, 2, 2);
 
   var surfaceColor = new Vec3(0, 0, 0);
   var phit = rayorig.sum(raydir.mult(tnear));
@@ -129,38 +135,37 @@ function trace(rayorig, raydir, spheres, depth) {
   // the inside bool to true. Finally reverse the sign of IdotN which we want
   // positive.
   var bias = 1e-4;
-  var inside = false;
-  if (raydir.dot(nhit) > 0) {
+	var inside = false;
+	if (raydir.dot(nhit) > 0) {
     nhit = nhit.neg();
     inside = true;
   }
-
   if ((sphere.transparency > 0 || sphere.reflection > 0) && depth < MAX_RAY_DEPTH) {
     var facingratio = raydir.neg().dot(nhit);
+
     // change the mix value to tweak the effect
     var fresneleffect = mix(pow(1 - facingratio, 3), 1, 0.1);
     // compute reflection direction (not need to normalize because all vectors
     // are already normalized)
-    var refldir = raydir.mult(raydir.dot(nhit)).mult(2).sub(nhit);
-    refldir.normalize();
+    var refldir = raydir.sub(nhit.mult(raydir.dot(nhit) * 2));
+    // refldir.normalize();
     var reflection = trace(phit.sum(nhit.mult(bias)), refldir, spheres, depth + 1);
     var refraction = new Vec3(0, 0, 0);
     // if the sphere is also transparent compute refraction ray (transmission)
-    if (sphere.transparency) {
+    if (sphere.transparency > 0) {
       var ior = 1.1, eta = (inside) ? ior : 1 / ior; // are we inside or outside the surface?
-      var cosi = -nhit.dot(raydir);
+      var cosi = nhit.neg().dot(raydir);
       var k = 1 - eta * eta * (1 - cosi * cosi);
-      var refrdir = raydir.mult(eta).sum(nhit.mult(eta *  cosi - sqrt(k)));
+      var refrdir = raydir.mult(eta).sum(nhit.mult(eta * cosi - sqrt(k)));
       refrdir.normalize();
       refraction = trace(phit.sub(nhit.mult(bias)), refrdir, spheres, depth + 1);
     }
     // the result is a mix of reflection and refraction (if the sphere is transparent)
-    surfaceColor = sphere.surfaceColor.mult(
-      reflection.mult(fresneleffect).sum(
+    surfaceColor = sphere.surfaceColor
+      .mult(
         refraction.mult((1 - fresneleffect) * sphere.transparency)
-      )
-    );
-
+        .sum(reflection.mult(fresneleffect))
+      );
   }
   else {
     // it's a diffuse object, no need to raytrace any further
@@ -179,12 +184,11 @@ function trace(rayorig, raydir, spheres, depth) {
             }
           }
         }
-        surfaceColor = surfaceColor.sum(
-          sphere.surfaceColor
-          .mult(transmission)
+        surfaceColor = spheres[i].emissionColor
           .mult(Math.max(0, nhit.dot(lightDirection)))
-          .mult(spheres[i].emissionColor)
-        );
+          .mult(transmission)
+          .mult(sphere.surfaceColor)
+          .sum(surfaceColor);
       }
     }
   }
@@ -217,13 +221,14 @@ var spheres = [];
 // position, radius, surface color, reflectivity, transparency, emission color
 spheres.push(new Sphere(new Vec3( 0.0, -10004, -20), 10000, new Vec3(0.20, 0.20, 0.20), 0, 0.0));
 spheres.push(new Sphere(new Vec3( 0.0,      0, -20),     4, new Vec3(1.00, 0.32, 0.36), 1, 0.5));
+// spheres.push(new Sphere(new Vec3(-3.0,      0, -10),     3, new Vec3(0.30, 1.00, 0.30), 1, 0.0));
 spheres.push(new Sphere(new Vec3( 5.0,     -1, -15),     2, new Vec3(0.90, 0.76, 0.46), 1, 0.0));
 spheres.push(new Sphere(new Vec3( 5.0,      0, -25),     3, new Vec3(0.65, 0.77, 0.97), 1, 0.0));
 spheres.push(new Sphere(new Vec3(-5.5,      0, -15),     3, new Vec3(0.90, 0.90, 0.90), 1, 0.0));
 // light
 spheres.push(new Sphere(new Vec3( 0.0,     20, -30),     3, new Vec3(0.00, 0.00, 0.00), 0, 0.0, new Vec3(3, 3, 3)));
 
-var w = 340, h = 280;
+var w = 640, h = 480;
 var context2d = document.getElementById('canvas').getContext('2d');
 var imageData = context2d.getImageData(0, 0, w, h);
 var rawData = imageData.data;
