@@ -1,0 +1,6 @@
+[package]
+name = "hello_word"
+version = "0.1.0"
+authors = ["Danilo Resende <danilo.isr@gmail.com>"]
+
+[dependencies]
