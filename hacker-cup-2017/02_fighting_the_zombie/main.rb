@@ -33,8 +33,8 @@ gets.to_i.times do |i|
   probs = dice.map do |x, y, hi|
     to_roll = hi ? (h - hi) : h
 
-    1.0 - prob(to_roll - 1, x, y).round(6)
+    1.0 - prob(to_roll - 1, x, y)
   end
 
-  puts format('Case %d: %.6f', i+1, probs.max)
+  puts format('Case #%d: %.6f', i+1, probs.max.round(6))
 end
