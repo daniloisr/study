@@ -1,11 +1,18 @@
 package main
 
-import "github.com/gopherjs/gopherjs/js"
-import "fmt"
+import (
+	"fmt"
+	"time"
+
+	"github.com/gopherjs/gopherjs/js"
+)
 
 type v2 struct {
 	x, y int
 }
+
+var d, bs v2
+var grid = 10
 
 func main() {
 	doc := js.Global.Get("document")
@@ -13,16 +20,35 @@ func main() {
 	canvas := doc.Call("createElement", "canvas")
 	ctx := canvas.Call("getContext", "2d")
 
-	d := setupElements(body, canvas)
+	d = setupElements(body, canvas)
+	bs = v2{d.x / grid, d.y / grid}
 
-	grid := 10
-	bs := v2{d.x / grid, d.y / grid}
+	ticker := *time.NewTicker(1000 / 24 * time.Millisecond)
+	draw := makeDraw(ctx)
 
-	for x := 0; x < grid; x++ {
-		for y := 0; y < grid; y++ {
-			ctx.Set("fillStyle", fmt.Sprintf("#%x%x%x", 50+x*(205/grid), 50+y*(205/grid), 50+(x+y)*(205/(grid*2))))
-			ctx.Call("fillRect", x*bs.x, y*bs.y, bs.x, bs.y)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				draw()
+			}
 		}
+	}()
+
+	draw()
+}
+
+func makeDraw(ctx *js.Object) func() {
+	inc := 0.0
+	return func() {
+		for x := 0; x < grid; x++ {
+			for y := 0; y < grid; y++ {
+				b := ((y+int(inc))%grid)*8 + x*8
+				ctx.Set("fillStyle", fmt.Sprintf("#0000%.2x", 100+(b%156)))
+				ctx.Call("fillRect", x*bs.x, y*bs.y, bs.x, bs.y)
+			}
+		}
+		inc = (inc + 0.5)
 	}
 }
 
