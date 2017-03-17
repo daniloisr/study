@@ -26,31 +26,35 @@ func (a v2) div(x int) v2 {
 	return v2{a.x / x, a.y / x}
 }
 
-var d, bs v2
-var grid = 25
-var dir = v2{1, 0}
-var lastTick int64
-var food v2
-var ctx *js.Object
-var head []v2
-var dirbuf []v2
+var (
+	grid     = 10
+	lastTick int64
+	ctx      *js.Object
+	d, bs    v2
+	dir      v2
+	food     v2
+	head     []v2
+	dirbuf   []v2
+)
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	doc := js.Global.Get("document")
-	body := doc.Get("body")
-	canvas := doc.Call("createElement", "canvas")
-	ctx = canvas.Call("getContext", "2d")
 
-	d = setupElements(body, canvas)
+	d, ctx = setupElements()
 	bs = d.div(grid)
+
+	initVars()
+
+	js.Global.Call("addEventListener", "keydown", handler, true)
+	js.Global.Call("requestAnimationFrame", tick)
+}
+
+func initVars() {
+	dir = v2{1, 0}
 	lastTick = 0
 
 	head = []v2{{0, 2}}
 	food = randomFood()
-
-	js.Global.Call("addEventListener", "keydown", handler, true)
-	js.Global.Call("requestAnimationFrame", tick)
 }
 
 func randomFood() v2 {
@@ -69,25 +73,54 @@ func handler(o *js.Object) {
 	}
 
 	if val, ok := dirs[o.Get("code").String()]; ok {
-		oposite := dirs[val.oposite].dir
 		var lastdir v2
+
 		if len(dirbuf) == 0 {
 			lastdir = dir
 		} else {
 			lastdir = dirbuf[len(dirbuf)-1]
 		}
+
+		oposite := dirs[val.oposite].dir
 		if lastdir != oposite && lastdir != val.dir {
 			dirbuf = append(dirbuf, val.dir)
-			if len(dirbuf) > 1 {
-				fmt.Println(dirbuf)
-			}
 		}
+
 		o.Call("preventDefault")
 	}
 }
 
 func tick(o *js.Object) {
-	if v := o.Int64(); v-lastTick > 1000/3 {
+	if v := o.Int64(); v-lastTick > 1000/6 {
+		if len(dirbuf) > 0 {
+			dir, dirbuf = dirbuf[0], dirbuf[1:]
+		}
+
+		oldhead := head[0]
+		newhead := oldhead.add(dir)
+
+		invalid := false
+		for _, segment := range head {
+			invalid = newhead == segment
+			invalid = invalid || newhead.x < 0 || newhead.x >= grid
+			invalid = invalid || newhead.y < 0 || newhead.y >= grid
+
+			if invalid {
+				break
+			}
+		}
+
+		if food == newhead {
+			head = append([]v2{newhead}, head...)
+			food = randomFood()
+		} else {
+			head = append([]v2{newhead}, head[:len(head)-1]...)
+		}
+
+		if invalid {
+			initVars()
+		}
+
 		draw()
 		lastTick = o.Int64()
 	}
@@ -96,23 +129,6 @@ func tick(o *js.Object) {
 }
 
 func draw() {
-	if len(dirbuf) > 0 {
-		dir, dirbuf = dirbuf[0], dirbuf[1:]
-	}
-
-	oldhead := head[0]
-	newhead := oldhead.
-		add(dir).
-		add(v2{grid, grid}).
-		mod(grid)
-
-	if food == newhead {
-		head = append([]v2{newhead}, head...)
-		food = randomFood()
-	} else {
-		head = append([]v2{newhead}, head[:len(head)-1]...)
-	}
-
 	ctx.Set("fillStyle", "#dfdfdf")
 	ctx.Call("fillRect", 0, 0, bs.x*grid, bs.y*grid)
 	ctx.Set("fillStyle", "red")
@@ -123,7 +139,11 @@ func draw() {
 	}
 }
 
-func setupElements(body *js.Object, canvas *js.Object) v2 {
+func setupElements() (v2, *js.Object) {
+	doc := js.Global.Get("document")
+	body := doc.Get("body")
+	canvas := doc.Call("createElement", "canvas")
+
 	styles := map[string]string{
 		"margin":   "0",
 		"position": "absolute",
@@ -157,5 +177,5 @@ func setupElements(body *js.Object, canvas *js.Object) v2 {
 
 	body.Call("appendChild", canvas)
 
-	return v2{size, size}
+	return v2{size, size}, canvas.Call("getContext", "2d")
 }
