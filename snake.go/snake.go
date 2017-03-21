@@ -165,7 +165,7 @@ func setupElements() (v2, *js.Object) {
 	}
 
 	size := int(float32(biggest) * 0.9)
-	marginLeft := (w - biggest) / 2
+	marginLeft := (w - size) / 2
 	if marginLeft < 0 {
 		marginLeft = 0
 	}
