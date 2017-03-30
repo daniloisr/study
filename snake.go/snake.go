@@ -1,64 +1,38 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/gopherjs/gopherjs/js"
 )
 
-type v2 struct {
-	x, y int
+var game struct {
+	gridSize   int
+	lastTick   int64
+	currentDir v2
+	food       v2
+	body       []v2
+	dirbuf     []v2
 }
 
-func (a v2) add(b v2) v2 {
-	a.x += b.x
-	a.y += b.y
-	return a
-}
+func initGame() {
+	game.gridSize = 10
+	game.currentDir = v2{1, 0}
+	game.lastTick = 0
 
-func (a v2) mod(x int) v2 {
-	return v2{a.x % x, a.y % x}
+	game.body = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
+	game.food = randomV2(game.gridSize)
 }
-
-func (a v2) div(x int) v2 {
-	return v2{a.x / x, a.y / x}
-}
-
-var (
-	grid     = 10
-	lastTick int64
-	ctx      *js.Object
-	d, bs    v2
-	dir      v2
-	food     v2
-	head     []v2
-	dirbuf   []v2
-)
 
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	d, ctx = setupElements()
-	bs = d.div(grid)
-
-	initVars()
+	initGame()
+	initView()
 
 	js.Global.Call("addEventListener", "keydown", handler, true)
 	js.Global.Call("requestAnimationFrame", tick)
-}
-
-func initVars() {
-	dir = v2{1, 0}
-	lastTick = 0
-
-	head = []v2{{0, 2}}
-	food = randomFood()
-}
-
-func randomFood() v2 {
-	return v2{rand.Intn(grid), rand.Intn(grid)}
 }
 
 func handler(o *js.Object) {
@@ -75,15 +49,15 @@ func handler(o *js.Object) {
 	if val, ok := dirs[o.Get("code").String()]; ok {
 		var lastdir v2
 
-		if len(dirbuf) == 0 {
-			lastdir = dir
+		if len(game.dirbuf) == 0 {
+			lastdir = game.currentDir
 		} else {
-			lastdir = dirbuf[len(dirbuf)-1]
+			lastdir = game.dirbuf[len(game.dirbuf)-1]
 		}
 
 		oposite := dirs[val.oposite].dir
 		if lastdir != oposite && lastdir != val.dir {
-			dirbuf = append(dirbuf, val.dir)
+			game.dirbuf = append(game.dirbuf, val.dir)
 		}
 
 		o.Call("preventDefault")
@@ -91,91 +65,39 @@ func handler(o *js.Object) {
 }
 
 func tick(o *js.Object) {
-	if v := o.Int64(); v-lastTick > 1000/6 {
-		if len(dirbuf) > 0 {
-			dir, dirbuf = dirbuf[0], dirbuf[1:]
+	if v := o.Int64(); v-game.lastTick > 1000/8 {
+		if len(game.dirbuf) > 0 {
+			game.currentDir, game.dirbuf = game.dirbuf[0], game.dirbuf[1:]
 		}
 
-		oldhead := head[0]
-		newhead := oldhead.add(dir)
+		oldhead := game.body[0]
+		newhead := oldhead.add(game.currentDir)
 
 		invalid := false
-		for _, segment := range head {
+		for _, segment := range game.body {
 			invalid = newhead == segment
-			invalid = invalid || newhead.x < 0 || newhead.x >= grid
-			invalid = invalid || newhead.y < 0 || newhead.y >= grid
+			invalid = invalid || newhead.x < 0 || newhead.x >= game.gridSize
+			invalid = invalid || newhead.y < 0 || newhead.y >= game.gridSize
 
 			if invalid {
 				break
 			}
 		}
 
-		if food == newhead {
-			head = append([]v2{newhead}, head...)
-			food = randomFood()
+		if game.food == newhead {
+			game.body = append([]v2{newhead}, game.body...)
+			game.food = randomV2(game.gridSize)
 		} else {
-			head = append([]v2{newhead}, head[:len(head)-1]...)
+			game.body = append([]v2{newhead}, game.body[:len(game.body)-1]...)
 		}
 
 		if invalid {
-			initVars()
+			initGame()
 		}
 
 		draw()
-		lastTick = o.Int64()
+		game.lastTick = o.Int64()
 	}
 
 	js.Global.Call("requestAnimationFrame", tick)
-}
-
-func draw() {
-	ctx.Set("fillStyle", "#dfdfdf")
-	ctx.Call("fillRect", 0, 0, bs.x*grid, bs.y*grid)
-	ctx.Set("fillStyle", "red")
-	ctx.Call("fillRect", food.x*bs.x+3, food.y*bs.y+3, bs.x-6, bs.y-6)
-	ctx.Set("fillStyle", "black")
-	for _, p := range head {
-		ctx.Call("fillRect", p.x*bs.x+2, p.y*bs.y+2, bs.x-4, bs.y-4)
-	}
-}
-
-func setupElements() (v2, *js.Object) {
-	doc := js.Global.Get("document")
-	body := doc.Get("body")
-	canvas := doc.Call("createElement", "canvas")
-
-	styles := map[string]string{
-		"margin":   "0",
-		"position": "absolute",
-		"top":      "0",
-		"bottom":   "0",
-		"left":     "0",
-		"right":    "0",
-		"overflow": "hidden",
-	}
-
-	for k, v := range styles {
-		body.Get("style").Set(k, v)
-	}
-
-	w, h := body.Get("clientWidth").Int(), body.Get("clientHeight").Int()
-	biggest := w
-	if biggest > h {
-		biggest = h
-	}
-
-	size := int(float32(biggest) * 0.9)
-	marginLeft := (w - size) / 2
-	if marginLeft < 0 {
-		marginLeft = 0
-	}
-
-	canvas.Set("width", size)
-	canvas.Set("height", size)
-	canvas.Get("style").Set("margin-top", fmt.Sprintf("%dpx", int(float32(biggest)*0.05)))
-	canvas.Get("style").Set("margin-left", fmt.Sprintf("%dpx", int(marginLeft)))
-
-	body.Call("appendChild", canvas)
-
-	return v2{size, size}, canvas.Call("getContext", "2d")
 }
