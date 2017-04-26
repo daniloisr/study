@@ -7,21 +7,32 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
-var game struct {
+type _game struct {
 	gridSize   int
+	level      int
 	lastTick   int64
+	levelStep  int
 	currentDir v2
 	food       v2
 	body       []v2
 	dirbuf     []v2
 }
 
+func (g _game) interval() int {
+	return 1000 / (g.level + 8)
+}
+
+var game = _game{}
+var initialBody = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
+
 func initGame() {
 	game.gridSize = 10
-	game.currentDir = v2{1, 0}
+	game.level = 0
 	game.lastTick = 0
+	game.levelStep = 3
+	game.currentDir = v2{1, 0}
 
-	game.body = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
+	game.body = initialBody
 	game.food = randomV2(game.gridSize)
 }
 
@@ -31,11 +42,11 @@ func main() {
 	initGame()
 	initView()
 
-	js.Global.Call("addEventListener", "keydown", handler, true)
+	js.Global.Call("addEventListener", "keydown", keyHandler, true)
 	js.Global.Call("requestAnimationFrame", tick)
 }
 
-func handler(o *js.Object) {
+func keyHandler(o *js.Object) {
 	dirs := map[string]struct {
 		dir     v2
 		oposite string
@@ -65,7 +76,7 @@ func handler(o *js.Object) {
 }
 
 func tick(o *js.Object) {
-	if v := o.Int64(); v-game.lastTick > 1000/8 {
+	if v := o.Int64(); v-game.lastTick > int64(game.interval()) {
 		if len(game.dirbuf) > 0 {
 			game.currentDir, game.dirbuf = game.dirbuf[0], game.dirbuf[1:]
 		}
@@ -87,6 +98,7 @@ func tick(o *js.Object) {
 		if game.food == newhead {
 			game.body = append([]v2{newhead}, game.body...)
 			game.food = randomV2(game.gridSize)
+			game.level = (len(game.body) - len(initialBody)) / game.levelStep
 		} else {
 			game.body = append([]v2{newhead}, game.body[:len(game.body)-1]...)
 		}
