@@ -1,7 +1,5 @@
 package main
 
-import "math/rand"
-
 type v2 struct {
 	x, y int
 }
@@ -30,8 +28,4 @@ func (a v2) toArray() [2]int {
 
 func (a v2) div(x int) v2 {
 	return v2{a.x / x, a.y / x}
-}
-
-func randomV2(max int) v2 {
-	return v2{rand.Intn(max), rand.Intn(max)}
 }
