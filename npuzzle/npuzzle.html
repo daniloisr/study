@@ -1,0 +1,335 @@
+<!doctype html> 
+<html>
+    <head>
+        <meta charset="utf-8" /> 
+        <style type="text/css">
+            body {
+			    background-color: #333 }
+            h1 {
+                color: white;
+                text-shadow: #555 3px 3px 4px; }
+            span {
+                font-size: 14px;
+                color: #fff;
+                text-shadow: #444 1px 1px 1px; }
+            button {
+                padding: 3px 5px;
+                margin-bottom: 10px;
+                margin-top: 5px }
+            div#timer {
+                color: white;}
+            div#border {
+                margin: 0 auto;
+                width: 402px;
+                border: 2px solid #444; }
+            div#tab {
+                width: 400px;
+                height: 400px;
+                border: 1px solid black; }
+            div.piece {
+                cursor: pointer;
+                display: inline-block;
+                width: 98px;
+                height: 98px;
+                text-align: center;
+                font-size: 2em;
+                line-height: 98px;
+                color: white;
+                text-shadow: #555 3px 3px 4px;
+                font-family: Arial,Helvetica,sans-serif;
+                border: 1px solid black;}
+            div.null {
+                border: 1px solid black;
+                background-color: #333; }
+            div#log {
+                display: none;
+                height: 5em;
+                overflow: auto;
+                background-color: white; }
+
+            div#border ::selection {
+                background: transparent;
+            }
+            div#border ::-moz-selection {
+                background: transparent;
+            }
+        </style>
+        <script type="text/javascript">
+            var LOG;
+            function log(msg){
+                LOG = document.getElementById('log');
+                LOG.innerHTML = msg + '<br />' + LOG.innerHTML;
+            }
+            
+            var msg_game_id = "Game id:";
+
+            var timer;
+            var empty_piece;
+            var game_id;
+            var ESP = '&nbsp;';
+            var size = 4;
+            var matriz = new Array(16);
+            var player_moves = 0;
+            var shuffle_times = 800;
+
+            var KEY_LEFT    = 37;
+            var KEY_UP      = 38;
+            var KEY_RIGHT   = 39;
+            var KEY_DOWN    = 40;
+
+            function create() {
+                for( var i=0; i<16; i++ ){
+                    var piece = document.createElement('div');
+                    piece.className = 'piece';
+                    piece.setAttribute('onclick', 'canMove('+i+')');
+                    piece.innerHTML = i+1;
+                    document.getElementById('tab').appendChild(piece);
+
+                    matriz[i] = piece;
+                }
+                matriz[15].className += ' null';
+                matriz[15].innerHTML = ESP;
+                
+                empty_piece = 15;
+                
+                shinePossible(true);
+
+                keyInit();
+                timer = new Timer();
+            }
+            
+            function win() {
+                for( var i=0; i<15; i++ ){
+                    if( parseInt(matriz[i].innerHTML)-1 != i ) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function canMove(piece){
+                var empty = neighborIsEmpty(getNeighbors(piece));
+                if( empty ){
+                    move(piece);
+                    player_moves++;
+                    
+                    if( empty_piece == 15 && win() ){
+                        clearInterval(timer.loop_handler);
+                        var timer_html = document.getElementById("timer").innerHTML;
+                        alert("You win! \\o/\nWith " + player_moves + " moves and take " + timer_html + " seconds!");
+                        player_moves = 0;
+                    }
+                }
+            }
+            
+            function move(piece){
+                shinePossible(false);
+                shine(matriz[piece], false);
+                
+                var empty = matriz[empty_piece];
+                empty.className = '';
+                empty.className = 'piece';
+                empty.innerHTML = matriz[piece].innerHTML;
+                matriz[piece].className += ' null';
+                matriz[piece].innerHTML = ESP;
+                
+                empty_piece = piece;
+                
+                shinePossible(true);
+            }
+
+            function getNeighbors(id){
+                var neighbor = new Array();
+                if( id < size ){
+                    neighbor.push(id+size);
+                }
+                else if( id >= (size-1)*size ){
+                    neighbor.push(id-size);
+                }
+                else {
+                    neighbor.push(id+size);
+                    neighbor.push(id-size);
+                }
+
+
+                if( id % size == 0){
+                    neighbor.push(id+1);
+                }
+                else if( id % size == size-1 ){
+                    neighbor.push(id-1);
+                }
+                else {
+                    neighbor.push(id+1);
+                    neighbor.push(id-1);
+                }
+
+                return neighbor;
+            }
+
+            function neighborIsEmpty(elements){
+                var exp = /null/ ; 
+                for( var i=0; i<elements.length; i++ ){
+                    if( exp.exec(matriz[elements[i]].className) ){
+                        return matriz[elements[i]];
+                    }
+                }
+                return false;
+
+            }
+            
+            function neighborsOfEmpty(){
+                return getNeighbors( empty_piece );
+            }
+
+            function beginGameById(game_id){
+                if( game_id == null || game_id.length != matriz.length || game_id.match(/[^0-9|a-f]/) != null ){
+                    log( game_id == null );
+                    log( game_id.length != matriz.length );
+                    log(game_id.match(/[^0-9|a-f]/));
+                    log( "Invalid game id!" );
+                    return false;
+                }
+                
+                for( var i=0; i<matriz.length; i++ ){
+                    matriz[i].innerHTML = game_id.charAt(i) == 0 ? ESP : parseInt( game_id.charAt(i), 16 );
+                    empty_piece = game_id.charAt(i) == 0 ? i : empty_piece;
+                }
+                resetGame();
+            }
+            
+            function shuffle() {
+                for( var i=0; i<shuffle_times; i++ ){
+                    var neighbors = neighborsOfEmpty();
+                    var rand = Math.floor(Math.random() * neighbors.length);
+                    move( neighbors[rand] );
+                }
+                resetGame();
+            }
+
+            function saveGameId(){
+                var result = "";
+                for( i=0; i<matriz.length; i++ ){
+                    result += (i == empty_piece) ? '0' : parseInt(matriz[i].innerHTML).toString(16);
+                }
+                return result;
+            }
+            
+            function resetGame(){
+                player_moves = 0;
+                timer.reset();
+                timer.loop_handler = setInterval('timer.increment()', 10);
+
+                game_id = saveGameId();
+                document.getElementById("game_id").innerHTML = msg_game_id + " " + game_id;
+            }
+            
+            function shinePossible(turn_on){
+                var possibles = neighborsOfEmpty();
+                
+                for( var i=0; i<possibles.length; i++ ){
+                    if( turn_on ){
+                        matriz[possibles[i]].setAttribute('onmouseover', 'shine(this, true)');
+                        matriz[possibles[i]].setAttribute('onmouseout', 'shine(this, false)');
+                    }
+                    else{
+                        matriz[possibles[i]].setAttribute('onmouseover', '');
+                        matriz[possibles[i]].setAttribute('onmouseout', '');
+                    }
+                }
+            }
+            
+            function shine(piece, turn_on){
+                if( turn_on ){
+                    piece.style.border = '1px solid white';
+                }
+                else {
+                    piece.style.border = '1px solid black';
+                }
+            }
+
+            function keyInit(){
+                if( document.addEventListener ){
+                    document.addEventListener("keydown",keyIdentify,false);
+                }
+            }
+
+            function keyIdentify(e){
+                if( e.keyCode >= 37 && e.keyCode <= 40 ){
+                    if( e.preventDefault ) e.preventDefault();
+                    if( e.stopPropagation ) e.stopPropagation();
+                    
+                    if( e.keyCode == KEY_LEFT ){
+                        log( empty_piece + 1 );
+                        if( empty_piece % size != size-1 ){
+                            canMove(empty_piece + 1);
+                        }
+                    }
+                    if( e.keyCode == KEY_UP ){
+                        log( empty_piece + size );
+                        if( empty_piece < size*(size-1) ){
+                            canMove(empty_piece + size);
+                        }
+                    }
+                    if( e.keyCode == KEY_RIGHT ){
+                        log( empty_piece - 1 );
+                        if( empty_piece % size != 0 ){
+                            canMove(empty_piece - 1);
+                        }
+                    }
+                    if( e.keyCode == KEY_DOWN ){
+                        log( empty_piece - size );
+                        if( empty_piece > size-1 ){
+                            canMove(empty_piece - size);
+                        }
+                    }
+                }
+            }
+
+            function Timer(){
+                var start;
+                var end;
+                this.loop_handler;
+                this.diff;
+
+                this.increment = function (){
+                    end = new Date();
+                    this.diff = end - start;
+                    this.diff = new Date(this.diff);
+                    
+                    var min = this.diff.getMinutes();
+                    var sec = this.diff.getSeconds();
+                    var msec = this.diff.getMilliseconds();
+                    
+                    sec = (sec < 10 && min == 0) ? "0" + sec : sec + min*60;
+                    msec = msec < 10 ? "0" + msec : msec;
+                    
+                    document.getElementById("timer").innerHTML = sec + ":" + msec;
+                    
+                }
+
+                this.reset = function(){
+                    start = new Date();
+                }
+
+            }
+
+        </script>
+    </head>
+    <body>
+        <center>
+            <h1>15-PUZZLE</h1>
+            <div id="border"><div id="tab"></div></div>
+            <div id="log"></div>
+            <button onclick="shuffle()">Shuffle</button>
+            <button onclick="beginGameById(prompt('Insert game ID'))">Create a game by id</button>
+            <br />
+            <span id="game_id"></span>
+            <br />
+            <div id="timer"></div>
+            <br />
+            <span>You can use keyboard arrows to move the pieces</span>
+        </center>
+        <script type="text/javascript">create();</script>
+        <iframe src="http://peoplee.kodingen.com/count/count_n_puzzle.php" style="display: none"></iframe>
+    </body>
+</html>

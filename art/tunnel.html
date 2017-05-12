@@ -46,7 +46,7 @@ canvas {
 
   var frameRate = 1000/10, ltime = false, ftime = false, time, times = [];
   var c1, c2;
-  fori(var i=0; i<60; i++) times.push(0);
+  for(var i=0; i<60; i++) times.push(0);
 
   var c = 20;
   var tickCount = 0;
@@ -63,7 +63,6 @@ canvas {
     ltime = time;
 
     if(time - ftime > 1000) {
-      console.log(~~(1000 * times.length/times.reduce(function(v, i) { return v + i }, 0)));
       ftime = time;
     }
 
