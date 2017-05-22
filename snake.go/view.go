@@ -6,13 +6,13 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
-var view struct {
+type View struct {
 	ctx        *js.Object
 	canvasSize v2
 	cellSize   v2
 }
 
-func draw() {
+func (view *View) draw(game *Game) {
 	ctx := view.ctx
 	cellSize := view.cellSize
 	food := game.food
@@ -32,7 +32,7 @@ func draw() {
 	}
 }
 
-func initView() {
+func initView(game *Game) {
 	doc := js.Global.Get("document")
 	body := doc.Get("body")
 	canvas := doc.Call("createElement", "canvas")
@@ -56,7 +56,9 @@ func initView() {
 
 	body.Call("appendChild", canvas)
 
+	view := View{}
 	view.canvasSize = v2{size, size}
 	view.cellSize = v2{size, size}.div(game.gridSize)
 	view.ctx = canvas.Call("getContext", "2d")
+	game.view = view
 }

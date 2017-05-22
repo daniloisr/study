@@ -7,7 +7,7 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
-var game = struct {
+type Game struct {
 	gridSize   int
 	level      int
 	lastTick   int64
@@ -16,16 +16,17 @@ var game = struct {
 	food       v2
 	body       []v2
 	dirbuf     []v2
-}{}
+	view       View
+}
 
-func tickInterval(v int64) bool {
+func (game *Game) tickInterval(v int64) bool {
 	interval := 1000 / (game.level + 8)
 	return v-game.lastTick > int64(interval)
 }
 
 var initialBody = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
 
-func newFood() v2 {
+func (game *Game) genFood() v2 {
 	positions := make(map[v2]bool)
 
 	for i := 0; i < game.gridSize; i++ {
@@ -49,7 +50,7 @@ func newFood() v2 {
 	return availables[rand.Intn(len(availables))]
 }
 
-func initGame() {
+func resetGame(game *Game) {
 	game.gridSize = 10
 	game.level = 0
 	game.lastTick = 0
@@ -57,20 +58,21 @@ func initGame() {
 	game.currentDir = v2{1, 0}
 
 	game.body = initialBody
-	game.food = newFood()
+	game.food = game.genFood()
 }
 
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	initGame()
-	initView()
+	game := Game{}
+	resetGame(&game)
+	initView(&game)
 
-	js.Global.Call("addEventListener", "keydown", keyHandler, true)
-	js.Global.Call("requestAnimationFrame", tick)
+	js.Global.Call("addEventListener", "keydown", game.keyHandler, true)
+	js.Global.Call("requestAnimationFrame", game.tick)
 }
 
-func keyHandler(o *js.Object) {
+func (game *Game) keyHandler(o *js.Object) {
 	dirs := map[string]struct {
 		dir     v2
 		oposite string
@@ -99,8 +101,8 @@ func keyHandler(o *js.Object) {
 	}
 }
 
-func tick(o *js.Object) {
-	if v := o.Int64(); tickInterval(v) {
+func (game *Game) tick(o *js.Object) {
+	if v := o.Int64(); game.tickInterval(v) {
 		if len(game.dirbuf) > 0 {
 			game.currentDir, game.dirbuf = game.dirbuf[0], game.dirbuf[1:]
 		}
@@ -121,19 +123,19 @@ func tick(o *js.Object) {
 
 		if game.food == newhead {
 			game.body = append([]v2{newhead}, game.body...)
-			game.food = newFood()
+			game.food = game.genFood()
 			game.level = (len(game.body) - len(initialBody)) / game.levelStep
 		} else {
 			game.body = append([]v2{newhead}, game.body[:len(game.body)-1]...)
 		}
 
 		if invalid {
-			initGame()
+			resetGame(game)
 		}
 
-		draw()
+		game.view.draw(game)
 		game.lastTick = o.Int64()
 	}
 
-	js.Global.Call("requestAnimationFrame", tick)
+	js.Global.Call("requestAnimationFrame", game.tick)
 }
