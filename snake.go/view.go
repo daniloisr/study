@@ -37,20 +37,6 @@ func initView() {
 	body := doc.Get("body")
 	canvas := doc.Call("createElement", "canvas")
 
-	styles := map[string]string{
-		"margin":   "0",
-		"position": "absolute",
-		"top":      "0",
-		"bottom":   "0",
-		"left":     "0",
-		"right":    "0",
-		"overflow": "hidden",
-	}
-
-	for k, v := range styles {
-		body.Get("style").Set(k, v)
-	}
-
 	w, h := body.Get("clientWidth").Int(), body.Get("clientHeight").Int()
 	biggest := w
 	if biggest > h {
