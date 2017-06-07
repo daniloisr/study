@@ -7,6 +7,7 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
+// Game Model
 type Game struct {
 	gridSize   int
 	level      int
@@ -19,14 +20,12 @@ type Game struct {
 	view       View
 }
 
-func (game *Game) tickInterval(v int64) bool {
+func (game Game) tickInterval(v int64) bool {
 	interval := 1000 / (game.level + 8)
 	return v-game.lastTick > int64(interval)
 }
 
-var initialBody = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
-
-func (game *Game) genFood() v2 {
+func (game Game) genFood() v2 {
 	positions := make(map[v2]bool)
 
 	for i := 0; i < game.gridSize; i++ {
@@ -50,7 +49,7 @@ func (game *Game) genFood() v2 {
 	return availables[rand.Intn(len(availables))]
 }
 
-func resetGame(game *Game) {
+func (game *Game) reset() {
 	game.gridSize = 10
 	game.level = 0
 	game.lastTick = 0
@@ -61,26 +60,15 @@ func resetGame(game *Game) {
 	game.food = game.genFood()
 }
 
-func main() {
-	rand.Seed(time.Now().Unix())
-
-	game := Game{}
-	resetGame(&game)
-	initView(&game)
-
-	js.Global.Call("addEventListener", "keydown", game.keyHandler, true)
-	js.Global.Call("requestAnimationFrame", game.tick)
-}
-
 func (game *Game) keyHandler(o *js.Object) {
 	dirs := map[string]struct {
 		dir     v2
 		oposite string
 	}{
-		"KeyE": {v2{0, -1}, "KeyD"},
-		"KeyD": {v2{0, 1}, "KeyE"},
-		"KeyS": {v2{-1, 0}, "KeyF"},
-		"KeyF": {v2{1, 0}, "KeyS"},
+		"KeyW": {v2{0, -1}, "KeyS"},
+		"KeyS": {v2{0, 1}, "KeyW"},
+		"KeyA": {v2{-1, 0}, "KeyD"},
+		"KeyD": {v2{1, 0}, "KeyA"},
 	}
 
 	if val, ok := dirs[o.Get("code").String()]; ok {
@@ -130,12 +118,25 @@ func (game *Game) tick(o *js.Object) {
 		}
 
 		if invalid {
-			resetGame(game)
+			game.reset()
 		}
 
 		game.view.draw(game)
 		game.lastTick = o.Int64()
 	}
 
+	js.Global.Call("requestAnimationFrame", game.tick)
+}
+
+var initialBody = []v2{{0, 4}, {0, 3}, {0, 2}, {0, 1}}
+
+func main() {
+	rand.Seed(time.Now().Unix())
+
+	game := Game{}
+	game.reset()
+	game.view = makeView(game)
+
+	js.Global.Call("addEventListener", "keydown", game.keyHandler, true)
 	js.Global.Call("requestAnimationFrame", game.tick)
 }
