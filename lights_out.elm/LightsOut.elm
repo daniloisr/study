@@ -1,10 +1,3 @@
--- Code written in a single file to run it easy at
--- elm-lang.org/try
--- \o/
---
--- Next stuff to study
--- spartial index: https://en.wikipedia.org/wiki/Spatial_database#Spatial_Index
-
 module LightsOut where
 
 import Graphics.Collage exposing (..)
