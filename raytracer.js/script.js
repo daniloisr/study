@@ -1,5 +1,5 @@
+// Learning reference
 // http://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
-+function() {
 
 function Vec3(x, y, z) {
   this.x = x;
@@ -87,21 +87,15 @@ Sphere.prototype.intersect = function intersect(rayorig, raydir) {
   return [true, tca - thc, tca + thc];
 }
 
-
-
-
 var MAX_RAY_DEPTH = 5;
 var INFINITY = 10e8;
 var M_PI = 3.141592653589793
 var sqrt = Math.sqrt;
 var pow = Math.pow;
 
-
 function mix(a, b, mix) {
   return b * mix + a * (1 - mix);
 }
-
-
 
 function trace(rayorig, raydir, spheres, depth) {
   var tnear = INFINITY;
@@ -196,8 +190,6 @@ function trace(rayorig, raydir, spheres, depth) {
   return surfaceColor.sum(sphere.emissionColor);
 }
 
-
-
 function render(spheres, w, h) {
     var pixels = [];
     var invWidth = 1 / w, invHeight = 1 / h;
@@ -215,7 +207,6 @@ function render(spheres, w, h) {
     }
     return pixels;
 }
-
 
 var spheres = [];
 // position, radius, surface color, reflectivity, transparency, emission color
@@ -246,7 +237,3 @@ for (var i in pixels) {
 }
 
 context2d.putImageData(imageData, 0, 0);
-
-window.pixels = pixels;
-
-}();
