@@ -1,64 +1,14 @@
-# you can write to stdout for debugging purposes, e.g.
-# puts "this is a debug message"
-
 def solution(a, b)
-  # write your code in Ruby 2.2
-  result = 0
-  s = a.size
-  i = 0
+  x, y = a.first, b.first
+  i, s = 1, a.size
+  r = 0
 
-  while i < s - 1 do
-    j = i + 1
-
-    # last pair to check
-    if j == s - 1
-      # no swap needed
-      if a[i] < a[j] && b[i] < b[j]
-        next i += 1
-      end
-      # try swaping j
-      if a[i] < b[j] && b[i] < a[j] || b[i] < a[j] && a[i] < b[j]
-        result += 1
-        next i += 1
-      end
-      # imposible to swap
-      return -1
-    end
-
-    k = j + 1
-    next i += 1 if a[i] < a[j] && a[j] < a[k] &&
-                   b[i] < b[j] && b[j] < b[k]
-
-    # try to swap j
-    valid_swap_j = a[i] < b[j] && b[j] < a[k] &&
-                   b[i] < a[j] && a[j] < b[k]
-    if valid_swap_j
-      a[j], b[j] = b[j], a[j]
-      result += 1
-      next i += 1
-    end
-
-    # try to swap k
-    valid_swap_k = a[i] < a[j] && a[j] < b[k] &&
-                   b[i] < b[j] && b[j] < a[k]
-    if valid_swap_k
-      a[k], b[k] = b[k], a[k]
-      result += 1
-      next i += 1
-    end
-
-    # finaly swaps i
-    if a[i] < b[j] && b[i] < a[j]
-      a[i], b[i] = b[i], a[i]
-      result += 1
-      next i += 1
-    end
-
-    # imposible to swap
+  while i < s do
+    next (x, y, i, r = a[i], b[i], i + 1, r    ) if x < a[i] && y < b[i]
+    next (x, y, i, r = b[i], a[i], i + 1, [r + 1, i - r + 1].min) if x < b[i] && y < a[i]
     return -1
   end
-
-  [result, s - result].min
+  [r, s - r].min
 end
 
 require 'minitest/autorun'
@@ -141,5 +91,17 @@ class SolutionTest < Minitest::Test
     a = [1, 8, 3, 10, 5]
     b = [7, 2, 9, 4, 11]
     assert_equal 2, solution(a, b)
+  end
+
+  def test_changes_no_pair
+    a = [0, 1, 10, 10, 15]
+    b = [1, 5, 2, 30, 50]
+    assert_equal 1, solution(a, b)
+  end
+
+  def test_tricky
+    a = [0, 9, 5, 7]
+    b = [0, 4, 10, 11]
+    assert_equal 1, solution(a, b)
   end
 end
