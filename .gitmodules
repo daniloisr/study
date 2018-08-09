@@ -1,0 +1,6 @@
+[submodule "refs/lorenz-webgl"]
+	path = refs/lorenz-webgl
+	url = git@github.com:skeeto/lorenz-webgl.git
+[submodule "gridlock"]
+	path = gridlock
+	url = git@github.com:daniloisr/gridlock.git
