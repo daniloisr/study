@@ -152,7 +152,7 @@ var menu;
 var nBlocks = 14;
 var block_width = Math.ceil(500/14);
 var ctx;
-var colors = ['#33FF00', '#6600FF', '#FFFF00', '#FF0000', '#66FFFF', "#FF00FF"];
+var colors = ['#339900', '#6600FF', '#FFFF00', '#FF0000', '#66FFFF', "#FF00FF"];
 var bGroup;
 
 window.onload = function() {
